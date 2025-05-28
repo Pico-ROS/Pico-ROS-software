@@ -8,7 +8,7 @@
 #define LOCATOR     "tcp/192.168.1.16:7447"
 
 // Common utils
-extern int picoros_parse_args(int argc, char **argv, picoros_node_t* node);
+extern int picoros_parse_args(int argc, char **argv, picoros_interface_t* ifx);
 extern size_t ucdr_deserialize_string_no_copy(ucdrBuffer* ub, char** pstring);
 
 // Buffer for publication, used from this thread
@@ -33,8 +33,6 @@ picoros_publisher_t pub_log = {
 // Example node
 picoros_node_t node = {
     .name = "talker",
-    .mode = MODE,
-    .locator = LOCATOR,
     . guid = {0x01},
 };
 
@@ -46,21 +44,30 @@ void publish_log(){
 }
 
 int main(int argc, char **argv){
-    int ret = picoros_parse_args(argc, argv , &node);
+    picoros_interface_t ifx = {
+        .mode = MODE,
+        .locator = LOCATOR,
+    };
+    int ret = picoros_parse_args(argc, argv , &ifx);
 
     if(ret != 0){
         return ret;
     }
-    printf("Starting Pico-ROS node %s\n"
-           "mode:'%s' locator:'%s' domain:%d\n",
-           node.name, node.mode, node.locator, node.domain_id);
+
+    printf("Starting pico-ros interface %s %s\n", ifx.mode, ifx.locator );
+
 
     ucdr_init_buffer(&pub_writer, pub_buf.data, sizeof(pub_buf.data));
-    while (picoros_init(&node) == PICOROS_NOT_READY){
+    while (picoros_interface_init(&ifx) == PICOROS_NOT_READY){
         printf("Waiting RMW init...\n");
         z_sleep_s(1);
     }
-    picoros_publisher_declare(&pub_log);
+
+    printf("Starting Pico-ROS node %s domain:%d\n", node.name, node.domain_id);
+    picoros_node_init(&node);
+
+    printf("Declaring publisher on %s\n", pub_log.topic.name);
+    picoros_publisher_declare(&node, &pub_log);
 
     while(true){
         publish_log();

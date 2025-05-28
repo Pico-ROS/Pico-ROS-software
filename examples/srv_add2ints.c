@@ -8,7 +8,7 @@
 #define LOCATOR     "tcp/192.168.1.16:7447"
 
 // Common utils
-extern int picoros_parse_args(int argc, char **argv, picoros_node_t* node);
+extern int picoros_parse_args(int argc, char **argv,  picoros_interface_t* ifx);
 
 // Service callback
 picoros_service_reply_t add2_srv_cb(uint8_t* request, size_t size, void* user_data);
@@ -20,7 +20,7 @@ struct {
     uint8_t data[1024];
 }srv_buf = {.header = 0x0100}; // Little-Endian format OMG-CDR specification.
 
-// Buffer writer
+
 ucdrBuffer srv_writer;
 
 
@@ -38,8 +38,6 @@ picoros_service_t add2_srv = {
 // Example node
 picoros_node_t node = {
     .name = "picoros",
-    .mode = MODE,
-    .locator = LOCATOR,
     . guid = {0x03},
 };
 
@@ -66,23 +64,28 @@ picoros_service_reply_t add2_srv_cb(uint8_t* rx_data, size_t rx_size, void* user
 }
 
 int main(int argc, char **argv){
-
-    int ret = picoros_parse_args(argc, argv , &node);
+    ucdr_init_buffer(&srv_writer, srv_buf.data, sizeof(srv_buf.data));
+    picoros_interface_t ifx = {
+        .mode = MODE,
+        .locator = LOCATOR,
+    };
+    int ret = picoros_parse_args(argc, argv , &ifx);
 
     if(ret != 0){
         return ret;
     }
-    printf("Starting Pico-ROS node %s\n"
-           "mode:'%s' locator:'%s' domain:%d\n",
-           node.name, node.mode, node.locator, node.domain_id);
 
-    ucdr_init_buffer(&srv_writer, srv_buf.data, sizeof(srv_buf.data));
+    printf("Starting pico-ros interface %s %s\n", ifx.mode, ifx.locator );
 
-    while (picoros_init(&node) == PICOROS_NOT_READY){
+    while (picoros_interface_init(&ifx) == PICOROS_NOT_READY){
         printf("Waiting RMW init...\n");
         z_sleep_s(1);
     }
-    picoros_service_declare(&add2_srv);
+    printf("Starting Pico-ROS node %s domain:%d\n", node.name, node.domain_id);
+    picoros_node_init(&node);
+
+    printf("Declaring service on %s\n", add2_srv.topic.name);
+    picoros_service_declare(&node, &add2_srv);
 
     while(true){
         z_sleep_s(1);

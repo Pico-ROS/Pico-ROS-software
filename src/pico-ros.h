@@ -87,11 +87,14 @@ typedef struct{
 
 typedef struct{
     char*                   name;
-    char*                   mode;
-    char*                   locator;
     uint32_t                domain_id;
     uint8_t                 guid[RMW_GID_SIZE];
 }picoros_node_t;
+
+typedef struct{
+    char*                   mode;
+    char*                   locator;
+}picoros_interface_t;
 
 typedef enum{
     PICOROS_OK    =  0,
@@ -101,16 +104,18 @@ typedef enum{
 
 
 /* Exported functions --------------------------------------------------------*/
-picoros_res_t picoros_init(picoros_node_t* node);
-void          picoros_shutdown();
+picoros_res_t picoros_interface_init(picoros_interface_t* ifx);
+void          picoros_interface_shutdown();
 
-picoros_res_t picoros_publisher_declare(picoros_publisher_t *pub);
+picoros_res_t picoros_node_init(picoros_node_t* node);
+
+picoros_res_t picoros_publisher_declare(picoros_node_t* node, picoros_publisher_t *pub);
 picoros_res_t picoros_publish(picoros_publisher_t *pub, uint8_t *payload, size_t len);
 
-picoros_res_t picoros_subscriber_declare(picoros_subscriber_t *sub);
+picoros_res_t picoros_subscriber_declare(picoros_node_t* node, picoros_subscriber_t *sub);
 picoros_res_t picoros_unsubscribe(picoros_subscriber_t *sub);
 
-picoros_res_t picoros_service_declare(picoros_service_t* srv);
+picoros_res_t picoros_service_declare(picoros_node_t* node, picoros_service_t* srv);
 
 // picoros_res_t picoros_service_call();
 

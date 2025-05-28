@@ -13,17 +13,17 @@ size_t ucdr_deserialize_string_no_copy(ucdrBuffer* ub, char** pstring){
     return len;
 }
 
-int picoros_parse_args(int argc, char **argv, picoros_node_t* node) {
+int picoros_parse_args(int argc, char **argv, picoros_interface_t* ifx) {
     int opt;
     while ((opt = getopt(argc, argv, "a:m:h")) != -1) {
         switch (opt) {
             case 'a':
                 // CONFIG_CONNECT_KEY
-                node->locator = optarg;
+                ifx->locator = optarg;
                 break;
             case 'm':
                 // Z_CONFIG_MODE_KEY
-                node->mode = optarg;
+                ifx->mode = optarg;
                 break;
             case 'h':
                 fprintf(stderr,
