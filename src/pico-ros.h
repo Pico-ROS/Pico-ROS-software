@@ -8,8 +8,6 @@
 #ifndef PICO_ROS_H_
 #define PICO_ROS_H_
 
-#include <stddef.h>
-#include <sys/types.h>
 #ifdef __cplusplus
  extern "C" {
 #endif
