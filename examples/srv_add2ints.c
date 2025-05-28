@@ -27,7 +27,7 @@ ucdrBuffer srv_writer;
 // Example service
 picoros_service_t add2_srv = {
     .topic = {
-        .name = "picoros/add2",
+        .name = "add2",
         .type = "example_interfaces::srv::dds_::AddTwoInts",
         .rihs_hash = "e118de6bf5eeb66a2491b5bda11202e7b68f198d6f67922cf30364858239c81a",
     },
@@ -38,7 +38,7 @@ picoros_service_t add2_srv = {
 // Example node
 picoros_node_t node = {
     .name = "picoros",
-    . guid = {0x03},
+    .guid = {0x03},
 };
 
 // Service callback
@@ -51,13 +51,14 @@ picoros_service_reply_t add2_srv_cb(uint8_t* rx_data, size_t rx_size, void* user
 
     int64_t sum = a + b;
 
-    printf("Service add2ints called a:%ld, b:%ld, Sending reply sum:%ld\n", a,b,sum);
+    printf("Service add2(a:%ld, b:%ld) called. Sending reply sum:%ld\n", a, b, sum);
 
     ucdr_serialize_int64_t(&srv_writer, sum);
 
     picoros_service_reply_t reply = {
         .length = ucdr_buffer_length(&srv_writer) + sizeof(cdr_header_t),
         .data = (uint8_t*)&srv_buf,
+        .free_callback = NULL, // no need to free static buffer
     };
 
     return reply;

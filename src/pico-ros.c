@@ -45,7 +45,7 @@ static int rmw_zenoh_node_liveliness_keyexpr(picoros_node_t* node, char *keyexpr
             id.id[7], id.id[8],  id.id[9], id.id[10], id.id[11], id.id[12], id.id[13],
             id.id[14], id.id[15],
 #if USE_NODE_GUID == 1
-            pnode->name, guid[0], guid[1], guid[2], guid[3],
+            node->name, guid[0], guid[1], guid[2], guid[3],
             guid[4], guid[5], guid[6], guid[7],
             guid[8], guid[9], guid[10], guid[11],
             guid[12], guid[13], guid[14], guid[15]
@@ -59,6 +59,10 @@ static int rmw_zenoh_topic_keyexpr(picoros_node_t* node, rmw_topic_t* topic, cha
     return snprintf(keyexpr, KEYEXPR_SIZE, "%u/%s/%s_/RIHS01_%s", node->domain_id, topic->name, topic->type, topic->rihs_hash );
 }
 
+static int rmw_zenoh_service_keyexpr(picoros_node_t* node, rmw_topic_t* topic, char *keyexpr){
+    return snprintf(keyexpr, KEYEXPR_SIZE, "%u/%s/%s/%s_/RIHS01_%s", node->domain_id, node->name, topic->name, topic->type, topic->rihs_hash );
+}
+
 static int rmw_zenoh_topic_liveliness_keyexpr(picoros_node_t* node, rmw_topic_t* topic, char *keyexpr, const char *entity_str) {
     uint8_t* guid = node->guid;
     char topic_lv[96];
@@ -66,17 +70,23 @@ static int rmw_zenoh_topic_liveliness_keyexpr(picoros_node_t* node, rmw_topic_t*
 
     z_id_t id = z_info_zid(z_session_loan(&s_wrapper));
 
-    strncpy(topic_lv, topic->name, 95);
+    if (strcmp(entity_str, "SS") == 0){
+        // is service
+        snprintf(topic_lv, 95, "%s/%s", node->name, topic->name);
+    }
+    else{
+        strncpy(topic_lv, topic->name, 95);
+    }
 
+    // replace / with %
     while (*str) {
         if (*str == '/') {
             *str = '%';
         }
-
         str++;
     }
 
-   int ret = snprintf(keyexpr, KEYEXPR_SIZE,
+    int ret = snprintf(keyexpr, KEYEXPR_SIZE,
             "@ros2_lv/%u/"
             "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x/"
 #if USE_NODE_GUID == 1
@@ -326,7 +336,7 @@ picoros_res_t picoros_service_declare(picoros_node_t* node, picoros_service_t* s
 
    z_view_keyexpr_t ke;
    if (srv->topic.type != NULL){
-       rmw_zenoh_topic_keyexpr(node, &srv->topic, keyexpr);
+       rmw_zenoh_service_keyexpr(node, &srv->topic, keyexpr);
        z_view_keyexpr_from_str_unchecked(&ke, keyexpr);
    }
    else{

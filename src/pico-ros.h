@@ -33,15 +33,11 @@ typedef void (*picoros_sub_cb_t)(
 /* Service call callback */
 typedef void (*f_free)(void*);
 typedef struct{
-    uint8_t* data;
-    size_t   length;
-    f_free   free_callback;
+    uint8_t* data;                  // pointer to service reply data
+    size_t   length;                // length of service reply
+    f_free   free_callback;         // function to call when freeing reply data (can be NULL)
 }picoros_service_reply_t;
-/*
- * Function called when new service call arrives for registered service.
- * Return size of tx_data, 0 if no reply
- */
-
+/* Function called when new service call arrives for registered service.*/
 typedef picoros_service_reply_t (*picoros_service_cb_t)(
             uint8_t*  request_data,  // pointer to recieved data buffer. CDR encoded.
             size_t    reqest_size,   // size of recieved data
@@ -49,7 +45,7 @@ typedef picoros_service_reply_t (*picoros_service_cb_t)(
             );
 
 
-/* RWM types */
+/* RWM attchment expected by rmw_zenoh */
 typedef struct __attribute__((__packed__)){
     int64_t                 sequence_number;
     int64_t                 time;
@@ -57,6 +53,7 @@ typedef struct __attribute__((__packed__)){
     uint8_t                 rmw_gid[RMW_GID_SIZE];
 }rmw_attachment_t;
 
+/* RMW topic expected by rmw_zenoh */
 typedef struct{
     char*                   name;
     char*                   type;
