@@ -20,13 +20,11 @@
 /* Exported constants --------------------------------------------------------*/
 #define KEYEXPR_SIZE 400u
 #define RMW_GID_SIZE 16u
-
+#define USE_NODE_GUID 0
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 
-// typedef uint32_t cdr_header_t;
-
-
+/* Subscribe callback */
 /* Function called when new data arrives on subscribed topic. */
 typedef void (*picoros_sub_cb_t)(
             uint8_t* rx_data,       // pointer to recieved data buffer. CDR encoded.
@@ -34,7 +32,7 @@ typedef void (*picoros_sub_cb_t)(
             );
 
 
-/* Service call helpers */
+/* Service call callback */
 typedef void (*f_free)(void*);
 typedef struct{
     uint8_t* data;
@@ -52,9 +50,8 @@ typedef picoros_service_reply_t (*picoros_service_cb_t)(
             void*     user_data      // user data passed when registering the service
             );
 
-// #define PICOROS_SERVICE(_name) size_t _name(uint8_t* rx_data, size_t rx_size, uint8_t** tx_data, f_free* pf_free, void* user_data)
 
-
+/* RWM types */
 typedef struct __attribute__((__packed__)){
     int64_t                 sequence_number;
     int64_t                 time;
@@ -68,6 +65,8 @@ typedef struct{
     char*                   rihs_hash;
 }rmw_topic_t;
 
+
+/* pico-ros types */
 typedef struct{
     z_owned_publisher_t     zpub;
     rmw_attachment_t        attachment;
@@ -87,7 +86,6 @@ typedef struct{
      void*                  user_data;
      picoros_service_cb_t   user_callback;
 }picoros_service_t;
-
 
 typedef struct{
     char*                   name;
@@ -116,21 +114,7 @@ picoros_res_t picoros_unsubscribe(picoros_subscriber_t *sub);
 
 picoros_res_t picoros_service_declare(picoros_service_t* srv);
 
-
-// z_result_t picoros_service_call();
-
-
-// z_result_t zenoh_query(
-//         char* key,
-//         z_get_options_t* opts,
-//         _z_closure_reply_callback_t reply_cb,
-//         z_closure_drop_callback_t drop_cb,
-//         uint8_t* data, size_t size);
-//
-// z_result_t zenoh_queryable_reply(picoros_service_t* q, z_loaned_query_t *query, z_owned_bytes_t* payload, int64_t sequence);
-//
-
-int picoros_parse_args(int argc, char **argv, picoros_node_t* node);
+// picoros_res_t picoros_service_call();
 
 #ifdef __cplusplus
 }

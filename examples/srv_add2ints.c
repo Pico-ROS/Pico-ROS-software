@@ -3,15 +3,15 @@
 #include "pico-ros.h"
 #include "ucdr/microcdr.h"
 
-// Peer mode values (comment/uncomment as needed)
+// Use command line arguments to change default values
 #define MODE        "client"
 #define LOCATOR     "tcp/192.168.1.16:7447"
-// #define MODE "peer"
-// #define LOCATOR "udp/224.0.0.225:7447#iface=en0"
+
+// Common utils
+extern int picoros_parse_args(int argc, char **argv, picoros_node_t* node);
 
 // Service callback
 picoros_service_reply_t add2_srv_cb(uint8_t* request, size_t size, void* user_data);
-
 
 // Buffer for service reply, used from zenoh threads
 typedef uint32_t cdr_header_t;
@@ -20,6 +20,7 @@ struct {
     uint8_t data[1024];
 }srv_buf = {.header = 0x0100}; // Little-Endian format OMG-CDR specification.
 
+// Buffer writer
 ucdrBuffer srv_writer;
 
 
@@ -63,9 +64,6 @@ picoros_service_reply_t add2_srv_cb(uint8_t* rx_data, size_t rx_size, void* user
 
     return reply;
 }
-
-// arg parsing utility
-extern int picoros_parse_args(int argc, char **argv, picoros_node_t* node);
 
 int main(int argc, char **argv){
 

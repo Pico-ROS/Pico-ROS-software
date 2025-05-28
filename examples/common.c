@@ -1,6 +1,17 @@
 #include "pico-ros.h"
 #include <stdio.h>
 #include <unistd.h>
+#include "ucdr/microcdr.h"
+
+size_t ucdr_deserialize_string_no_copy(ucdrBuffer* ub, char** pstring){
+    uint32_t len = 0;
+    ucdr_deserialize_endian_uint32_t(ub, ub->endianness, &len);
+    *pstring = (char*)ub->iterator;
+    ub->iterator += len;
+    ub->offset += len;
+    ub->last_data_size = 1;
+    return len;
+}
 
 int picoros_parse_args(int argc, char **argv, picoros_node_t* node) {
     int opt;

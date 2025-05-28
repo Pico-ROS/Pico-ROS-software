@@ -33,19 +33,26 @@ void rmw_zenoh_gen_attachment_gid(rmw_attachment_t* attachment){
 }
 
 int rmw_zenoh_node_liveliness_keyexpr(const z_id_t *id, char *keyexpr){
+    uint8_t* guid = pnode->guid;
     return snprintf(keyexpr, KEYEXPR_SIZE,
             "@ros2_lv/%d/%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x/0/0/NN/%%/%%/"
-//            "%s_%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+#if USE_NODE_GUID == 1
+            "%s_%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+#else
             "%s",
+#endif
             pnode->domain_id,
             id->id[0], id->id[1],  id->id[2], id->id[3], id->id[4], id->id[5], id->id[6],
             id->id[7], id->id[8],  id->id[9], id->id[10], id->id[11], id->id[12], id->id[13],
             id->id[14], id->id[15],
+#if USE_NODE_GUID == 1
+            pnode->name, guid[0], guid[1], guid[2], guid[3],
+            guid[4], guid[5], guid[6], guid[7],
+            guid[8], guid[9], guid[10], guid[11],
+            guid[12], guid[13], guid[14], guid[15]
+#else
             pnode->name
-//            ,guid[0], guid[1], guid[2], guid[3],
-//            guid[4], guid[5], guid[6], guid[7],
-//            guid[8], guid[9], guid[10], guid[11],
-//            guid[12], guid[13], guid[14], guid[15]
+#endif
            );
 }
 
@@ -55,6 +62,7 @@ int rmw_zenoh_topic_keyexpr(const char *topic, const char *rihs_hash, char *type
 
 int rmw_zenoh_topic_liveliness_keyexpr(const z_id_t *id, const char *topic, const char *rihs_hash,
         char *type, char *keyexpr, const char *entity_str) {
+    uint8_t* guid = pnode->guid;
     char topic_lv[96];
     char *str = &topic_lv[0];
 
@@ -71,8 +79,11 @@ int rmw_zenoh_topic_liveliness_keyexpr(const z_id_t *id, const char *topic, cons
    int ret = snprintf(keyexpr, KEYEXPR_SIZE,
             "@ros2_lv/%u/"
             "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x/"
-//            "0/11/%s/%%/%%/mcb_%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x/%%%s/"
+#if USE_NODE_GUID == 1
+           "0/11/%s/%%/%%/%s_%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x/%%%s/"
+#else
             "0/11/%s/%%/%%/%s/%%%s/"
+#endif
             "%s_/RIHS01_%s"
             "/::,:,:,:,,",
             pnode->domain_id,
@@ -80,10 +91,12 @@ int rmw_zenoh_topic_liveliness_keyexpr(const z_id_t *id, const char *topic, cons
             id->id[7], id->id[8],  id->id[9], id->id[10], id->id[11], id->id[12], id->id[13],
             id->id[14], id->id[15],
             entity_str, pnode->name,
-//            guid[0], guid[1], guid[2], guid[3],
-//            guid[4], guid[5], guid[6], guid[7],
-//            guid[8], guid[9], guid[10], guid[11],
-//            guid[12], guid[13], guid[14], guid[15],
+#if USE_NODE_GUID == 1
+            guid[0], guid[1], guid[2], guid[3],
+            guid[4], guid[5], guid[6], guid[7],
+            guid[8], guid[9], guid[10], guid[11],
+            guid[12], guid[13], guid[14], guid[15],
+#endif
             topic_lv, type, rihs_hash
                );
 
@@ -311,33 +324,6 @@ picoros_res_t picoros_subscriber_declare(picoros_subscriber_t *sub) {
     return PICOROS_OK;
 
 }
-
-#if 0
-z_result_t zenoh_query(
-        char* key,
-        z_get_options_t* opts,
-        _z_closure_reply_callback_t reply_cb,
-        z_closure_drop_callback_t drop_cb,
-        uint8_t* data, size_t size
-){
-    z_result_t res;
-    z_owned_closure_reply_t callback;
-    z_view_keyexpr_t ke;
-    z_view_keyexpr_from_str_unchecked(&ke, key);
-    // Value encoding
-    z_owned_bytes_t payload;
-    z_closure_reply(&callback, reply_cb, drop_cb, NULL);
-    if (data != NULL && size > 0){
-        z_bytes_from_static_buf(&payload, data, size);
-        opts->payload = z_bytes_move(&payload);
-    }
-    res = z_get(z_session_loan(&s_wrapper), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&callback), opts);
-    z_bytes_drop(z_bytes_move(&payload));
-    z_bytes_drop(opts->payload);
-    z_closure_reply_drop(z_closure_reply_move(&callback));
-    return res;
-}
-#endif
 
 picoros_res_t picoros_service_declare(picoros_service_t* srv){
    z_result_t res;

@@ -3,17 +3,20 @@
 #include "pico-ros.h"
 #include "ucdr/microcdr.h"
 
+// Use command line arguments to change default values
 #define MODE        "client"
 #define LOCATOR     "tcp/192.168.1.16:7447"
 
-// Peer mode values (comment/uncomment as needed)
-// #define MODE "peer"
-// #define LOCATOR "udp/224.0.0.225:7447#iface=en0"
+// Common utils
+extern int picoros_parse_args(int argc, char **argv, picoros_node_t* node);
+extern size_t ucdr_deserialize_string_no_copy(ucdrBuffer* ub, char** pstring);
 
 typedef uint32_t cdr_header_t;
 
+// Subscriber callback
 void log_callback(uint8_t*, size_t);
 
+// Example Subscriber
 picoros_subscriber_t sub_log = {
     .topic = {
         .name = "picoros/chatter",
@@ -23,22 +26,13 @@ picoros_subscriber_t sub_log = {
     .user_callback = log_callback,
 };
 
+// Example node
 picoros_node_t node = {
     .name = "listener",
     .mode = MODE,
     .locator = LOCATOR,
     . guid = {0x02},
 };
-
-size_t ucdr_deserialize_string_no_copy(ucdrBuffer* ub, char** pstring){
-    uint32_t len = 0;
-    ucdr_deserialize_endian_uint32_t(ub, ub->endianness, &len);
-    *pstring = (char*)ub->iterator;
-    ub->iterator += len;
-    ub->offset += len;
-    ub->last_data_size = 1;
-    return len;
-}
 
 void log_callback(uint8_t* rx_data, size_t data_len){
     ucdrBuffer reader;
@@ -48,8 +42,6 @@ void log_callback(uint8_t* rx_data, size_t data_len){
     printf("Subscriber recieved: %s\n", msg);
 }
 
-// arg parsing utility
-extern int picoros_parse_args(int argc, char **argv, picoros_node_t* node);
 
 int main(int argc, char **argv){
     int ret = picoros_parse_args(argc, argv , &node);

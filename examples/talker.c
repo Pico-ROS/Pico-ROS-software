@@ -3,12 +3,13 @@
 #include "pico-ros.h"
 #include "ucdr/microcdr.h"
 
+// Use command line arguments to change default values
 #define MODE        "client"
 #define LOCATOR     "tcp/192.168.1.16:7447"
 
-// Peer mode values (comment/uncomment as needed)
-// #define MODE "peer"
-// #define LOCATOR "udp/224.0.0.225:7447#iface=en0"
+// Common utils
+extern int picoros_parse_args(int argc, char **argv, picoros_node_t* node);
+extern size_t ucdr_deserialize_string_no_copy(ucdrBuffer* ub, char** pstring);
 
 // Buffer for publication, used from this thread
 typedef uint32_t cdr_header_t;
@@ -17,8 +18,10 @@ struct {
     uint8_t data[1024];
 }pub_buf = {.header = 0x0100}; // Little-Endian format OMG-CDR specification.
 
+// Buffer writer
 ucdrBuffer pub_writer;
 
+// Example Publisher
 picoros_publisher_t pub_log = {
     .topic = {
         .name = "picoros/chatter",
@@ -27,6 +30,7 @@ picoros_publisher_t pub_log = {
     },
 };
 
+// Example node
 picoros_node_t node = {
     .name = "talker",
     .mode = MODE,
@@ -40,9 +44,6 @@ void publish_log(){
     size_t len = ucdr_buffer_length(&pub_writer);
     picoros_publish(&pub_log, (uint8_t*)&pub_buf, len + sizeof(cdr_header_t));
 }
-
-// arg parsing utility
-extern int picoros_parse_args(int argc, char **argv, picoros_node_t* node);
 
 int main(int argc, char **argv){
     int ret = picoros_parse_args(argc, argv , &node);

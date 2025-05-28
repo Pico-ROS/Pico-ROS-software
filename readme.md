@@ -20,10 +20,10 @@ User needs to provide their own CDR serialization / deserialization layer. This 
 ### Build
  - [zenoh-pico](https://github.com/eclipse-zenoh/zenoh-pico)
 
-### Functional
+#### Functional
  - [rmw-zenoh](https://github.com/ros2/rmw_zenoh). Needed for correct ROS interaction.
 
-### Examples 
+#### Examples 
  - [Micro-CDR](https://github.com/eProsima/Micro-CDR). CDR encoding / decoding.
 
  
