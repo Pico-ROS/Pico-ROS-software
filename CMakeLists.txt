@@ -41,9 +41,13 @@ if(PICOROS_BUILD_EXAMPLES)
   set(UCDR_ISOLATED_INSTALL OFF)
   add_subdirectory(thirdparty/Micro-CDR)
 
-  set(EXAMPLE_LIBS picoros microcdr)
-  set(EXAMPLE_SRC examples/common.c)
-
+  set(EXAMPLE_LIBS
+            picoros
+            microcdr
+  )
+  set(EXAMPLE_SRC
+            examples/common.c
+  )
   set(EXAMPLE_INCLUDE
             src/
             thirdparty/Micro-CDR/include

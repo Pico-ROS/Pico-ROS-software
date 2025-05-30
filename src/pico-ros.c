@@ -9,6 +9,7 @@
 /* Private includes ----------------------------------------------------------*/
 #include <string.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include "pico-ros.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/common/platform.h"
@@ -31,10 +32,12 @@ static void rmw_zenoh_gen_attachment_gid(rmw_attachment_t* attachment){
 }
 
 static int rmw_zenoh_node_liveliness_keyexpr(picoros_node_t* node, char *keyexpr){
+#if USE_NODE_GUID == 1
     uint8_t* guid = node->guid;
+#endif
     z_id_t id = z_info_zid(z_session_loan(&s_wrapper));
     return snprintf(keyexpr, KEYEXPR_SIZE,
-            "@ros2_lv/%d/%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x/0/0/NN/%%/%%/"
+            "@ros2_lv/%" PRIu32 "/%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x/0/0/NN/%%/%%/"
 #if USE_NODE_GUID == 1
             "%s_%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
 #else
@@ -56,15 +59,17 @@ static int rmw_zenoh_node_liveliness_keyexpr(picoros_node_t* node, char *keyexpr
 }
 
 static int rmw_zenoh_topic_keyexpr(picoros_node_t* node, rmw_topic_t* topic, char *keyexpr){
-    return snprintf(keyexpr, KEYEXPR_SIZE, "%u/%s/%s_/RIHS01_%s", node->domain_id, topic->name, topic->type, topic->rihs_hash );
+    return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s/%s_/RIHS01_%s", node->domain_id, topic->name, topic->type, topic->rihs_hash );
 }
 
 static int rmw_zenoh_service_keyexpr(picoros_node_t* node, rmw_topic_t* topic, char *keyexpr){
-    return snprintf(keyexpr, KEYEXPR_SIZE, "%u/%s/%s/%s_/RIHS01_%s", node->domain_id, node->name, topic->name, topic->type, topic->rihs_hash );
+    return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s/%s/%s_/RIHS01_%s", node->domain_id, node->name, topic->name, topic->type, topic->rihs_hash );
 }
 
 static int rmw_zenoh_topic_liveliness_keyexpr(picoros_node_t* node, rmw_topic_t* topic, char *keyexpr, const char *entity_str) {
+#if USE_NODE_GUID == 1
     uint8_t* guid = node->guid;
+#endif
     char topic_lv[96];
     char *str = &topic_lv[0];
 
@@ -87,7 +92,7 @@ static int rmw_zenoh_topic_liveliness_keyexpr(picoros_node_t* node, rmw_topic_t*
     }
 
     int ret = snprintf(keyexpr, KEYEXPR_SIZE,
-            "@ros2_lv/%u/"
+            "@ros2_lv/%" PRIu32 "/"
             "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x/"
 #if USE_NODE_GUID == 1
            "0/11/%s/%%/%%/%s_%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x/%%%s/"
