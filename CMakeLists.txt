@@ -80,4 +80,8 @@ if(PICOROS_BUILD_EXAMPLES)
   add_executable(listener examples/listener.c  ${EXAMPLE_SRC})
   target_include_directories(listener PUBLIC ${EXAMPLE_INCLUDE})
   target_link_libraries(listener PRIVATE  ${EXAMPLE_LIBS})
+
+  add_executable(odometry_listener examples/odometry_listener.c  ${EXAMPLE_SRC})
+  target_include_directories(odometry_listener PUBLIC ${EXAMPLE_INCLUDE})
+  target_link_libraries(odometry_listener PRIVATE  ${EXAMPLE_LIBS})
 endif()
