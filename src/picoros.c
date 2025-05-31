@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    pico-ros.c
+  * @file    picoros.c
   * @date    2025-May-27
   * @brief   Description
   ******************************************************************************
@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <inttypes.h>
-#include "pico-ros.h"
+#include "picoros.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/common/platform.h"
 #include "zenoh-pico/utils/result.h"

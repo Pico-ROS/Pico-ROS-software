@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
-#include "pico-ros.h"
+#include "picoros.h"
 #include "ucdr/microcdr.h"
 
 // Use command line arguments to change default values
