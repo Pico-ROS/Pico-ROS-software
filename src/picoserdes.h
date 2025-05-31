@@ -38,22 +38,16 @@
  * New lines need to be escaped with \
  *
  */
-
 #define ROSTYPE_LIST(BTYPE, CTYPE, TTYPE, FIELD, ARRAY) \
     BTYPE(ros_Int32,                            \
-        "std_msgs::msg::dds_::Int32",           \
-        "xx",                                   \
+        "example_interfaces::msg::dds_::Int32", \
+        "5cd04cd7f3adb9d6c6064c316047b24c76622eb89144f300b536d657fd55e652",                                   \
         int32_t                                 \
     )                                           \
     BTYPE(ros_Int64,                            \
-        "std_msgs::msg::dds_::Int64",           \
-        "xx",                                   \
+        "example_interfaces::msg::dds_::Int64", \
+        "1b3b9a6502f560d079520c73c685a9550e5a1838d2cefd537fe0aba75a3639a0",                                   \
         int64_t                                 \
-    )                                           \
-    BTYPE(ros_Double,                           \
-        "std_msgs::msg::dds_::Double",          \
-        "xx",                                   \
-        double                                  \
     )                                           \
     BTYPE(ros_String,                           \
         "std_msgs::msg::dds_::String",          \
@@ -77,18 +71,18 @@
     )                                           \
     TTYPE(ros_Point,                            \
         "geometry_msgs::msg::dds_::Point",      \
-        "xx",                                   \
+        "6963084842a9b04494d6b2941d11444708d892da2f4b09843b9c43f42a7f6881",                                   \
          ros_Vector3                            \
     )                                           \
     CTYPE(ros_Time,                             \
-        "std_msgs::msg::dds_::Time",            \
-        "xx",                                   \
+        "builtin_interfaces::msg::dds_::Time",  \
+        "b106235e25a4c5ed35098aa0a61a3ee9c9b18d197f398b0e4206cea9acf9c197",                                   \
         FIELD(int32_t, sec)                     \
         FIELD(int32_t, nsec)                    \
     )                                           \
     CTYPE(ros_Header,                           \
-        "std_msgs::msg::dds_::Header",          \
-        "xx",                                   \
+        "builtin_interfaces::msg::dds_::Header",\
+        "f49fb3ae2cf070f793645ff749683ac6b06203e41c891e17701b1cb597ce6a01",                                   \
         FIELD(ros_Time, time)                   \
         FIELD(rstring, frame_id)                \
     )                                           \
@@ -106,13 +100,13 @@
     )                                           \
     CTYPE(ros_PoseWithCovariance,               \
         "geometry_msgs::msg::dds_::PoseWithCovariance", \
-        "xx",                                   \
+        "9a7c0fd234b7f45c6098745ecccd773ca1085670e64107135397aee31c02e1bb",                                   \
         FIELD(ros_Pose, pose)                   \
         ARRAY(double, covariance, 36)           \
     )                                           \
     CTYPE(ros_TwistWithCovariance,              \
         "geometry_msgs::msg::dds_::TwistWithCovariance", \
-        "xx",                                   \
+        "49f574f033f095d8b6cd1beaca5ca7925e296e84af1716d16c89d38b059c8c18",                                   \
         FIELD(ros_Twist, twist)                 \
         ARRAY(double, covariance, 36)           \
     )                                           \
@@ -144,14 +138,6 @@ ROSTYPE_LIST(BTYPE_DECLARE, CTYPE_DECLARE, BTYPE_DECLARE, FIELD_EXPAND, ARRAY_EX
 #undef BTYPE_DECLARE
 #undef CTYPE_DECLARE
 #undef ARRAY_EXPAND
-
-#define ENUM_NAME(TYPE, ...) TYPE##_E,
-typedef enum {
-    ROSTYPE_LIST(ENUM_NAME, ENUM_NAME, ENUM_NAME, FIELD_EXPAND, ARRAY_EXPAND)
-}ps_type_e;
-#undef ENUM_NAME
-
-
 
 typedef struct{
     uint32_t*   p_size;

@@ -1,32 +1,39 @@
 # Pico-ROS
 
-## What is this
-This is a small layer above [zenoh-pico](https://github.com/eclipse-zenoh/zenoh-pico) working with [rmw-zenoh](https://github.com/ros2/rmw_zenoh)
+## What is this?
+**Pico-ROS** is a small layer above [zenoh-pico](https://github.com/eclipse-zenoh/zenoh-pico) working with [rmw-zenoh](https://github.com/ros2/rmw_zenoh)
 designed to provide easy interaction with ROS.
 
-This library provides some abstractions for ROS:
- - Node
- - Subscriber
- - Publisher
- - Service server
- 
-It is intended to be deployed on resource constrained devices wherever `zenoh-pico` will run. 
-Eventhough it is easy to use on linux, it doesn't intend to compete with [rclc](https://github.com/ros2/rclc) or [rclcpp](https://github.com/ros2/rclcpp)
-which have more features and are RMW agnostic.
+This repository provides two independant modules:
 
-User needs to provide their own CDR serialization / deserialization layer. This layer only passes the raw cdr buffer from RMW.
+### picoros
+Provides abstractions for ROS: 
+
+ - Node
+ - Subscriber 
+ - Publisher
+ - Service server 
+
+ Works with zenoh-pico and depends on zenoh-rmw.
+
+### picoserdes 
+Poor man ROS type abstractions and cdr serialization deserialization. 
+
+## Supported targets
+**Pico-ROS** is intended to be deployed on resource constrained devices wherever `zenoh-pico` will run. 
+Eventhough it is easy to use on linux, it doesn't intend to compete with [rclc](https://github.com/ros2/rclc) or [rclcpp](https://github.com/ros2/rclcpp)
+which have more features.
 
 ## Dependancies
 ### Build
- - [zenoh-pico](https://github.com/eclipse-zenoh/zenoh-pico)
+ - **picoros**
+    - [zenoh-pico](https://github.com/eclipse-zenoh/zenoh-pico)
+ - **picoserdes**
+    - [Micro-CDR](https://github.com/eProsima/Micro-CDR)
 
 #### Functional
  - [rmw-zenoh](https://github.com/ros2/rmw_zenoh). Needed for correct ROS interaction.
 
-#### Examples 
- - [Micro-CDR](https://github.com/eProsima/Micro-CDR). CDR encoding / decoding.
-
- 
 ## Building
 ```sh
 git clone <repo>
