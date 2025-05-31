@@ -11,16 +11,16 @@
 extern int picoros_parse_args(int argc, char **argv, picoros_interface_t* ifx);
 
 // Subscriber callback
-void log_callback(uint8_t*, size_t);
+void odometry_callback(uint8_t* rx_data, size_t data_len);
 
 // Example Subscriber
-picoros_subscriber_t sub_log = {
+picoros_subscriber_t sub_odo = {
     .topic = {
-        .name = "picoros/chatter",
-        .type = ROSTYPE_NAME(ros_String),
-        .rihs_hash = ROSTYPE_HASH(ros_String),
+        .name = "odom",
+        .type = ROSTYPE_NAME(ros_Odometry),
+        .rihs_hash = ROSTYPE_HASH(ros_Odometry),
     },
-    .user_callback = log_callback,
+    .user_callback = odometry_callback,
 };
 
 // Example node
@@ -28,11 +28,14 @@ picoros_node_t node = {
     .name = "listener",
 };
 
-void log_callback(uint8_t* rx_data, size_t data_len){
-    char* msg = NULL;
-    ps_deserialize(rx_data, &msg, data_len);
-    printf("Subscriber recieved: %s\n", msg);
+void odometry_callback(uint8_t* rx_data, size_t data_len){
+    ros_Odometry odo = {};
+    ps_deserialize(rx_data, &odo, data_len);
+    printf("New odometry frame:%s @%d.%d position x:%f y:%f z:%f\n",
+           odo.child_frame_id, odo.header.time.sec, odo.header.time.nsec,
+           odo.pose.pose.position.x, odo.pose.pose.position.y, odo.pose.pose.position.z);
 }
+
 
 int main(int argc, char **argv){
     picoros_interface_t ifx = {
@@ -53,8 +56,8 @@ int main(int argc, char **argv){
     printf("Starting Pico-ROS node %s domain:%d\n", node.name, node.domain_id);
     picoros_node_init(&node);
 
-    printf("Declaring subscriber on %s\n", sub_log.topic.name);
-    picoros_subscriber_declare(&node, &sub_log);
+    printf("Declaring subscriber on %s\n", sub_odo.topic.name);
+    picoros_subscriber_declare(&node, &sub_odo);
 
     while(true){
         z_sleep_s(1);

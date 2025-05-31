@@ -59,7 +59,7 @@ target_link_libraries(picoserdes microcdr)
 if(PICOROS_BUILD_EXAMPLES)
   set(EXAMPLE_LIBS
             picoros
-            microcdr
+            picoserdes
   )
   set(EXAMPLE_SRC
             examples/common.c

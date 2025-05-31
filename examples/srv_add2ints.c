@@ -38,7 +38,6 @@ picoros_service_t add2_srv = {
 // Example node
 picoros_node_t node = {
     .name = "picoros",
-    .guid = {0x03},
 };
 
 // Service callback
