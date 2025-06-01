@@ -8,24 +8,25 @@
 #ifndef EXAMPLE_TYPES_H
 #define EXAMPLE_TYPES_H
 
-/* Table of example types
- * BTYPE = Basic type - only one member, implemented as typedef
- * TTYPE = Typedef type - alias for ros type, implemented as typedef
+/* MSG_LIST(BTYPE, CTYPE, TTYPE, FIELD, ARRAY)
+ *
+ * User provided list of message types for creating serdes functions
+ * BTYPE = Basic type - only one member, implemented as typedef. FUNC(name, rmw_name, rmw_hash, type)
+ * TTYPE = Typedef type - alias for ros type, implemented as typedef. FUNC(name, rmw_name, rmw_hash, type)
  *         (seperated to disable types in _Generic calls)
- * CTYPE = Compound type - more members, implemented as struct
+ * CTYPE = Compound type - more members, implemented as struct. FUNC(name, rmw_name, rmw_hash, <fields...>)
  *      FIELD = Field of coumpound type FUNC(type, name)
  *      ARRAY = Array field of coumpound type FUNC(type, name, size)
  *
  * Each entry in table must have the following format
  * TYPE(                 \  // Can be BTYPE, CTYPE, TTYPE
- *      type_cname,      \  // Name of type used in code
- *      type_rmw_name,   \  // Full string name of type used in RMW
- *      type_rihs_hash,  \  // Type hash string used in RMS
+ *      name,            \  // Name of type used in code
+ *      rmw_name,        \  // Full string name of type used in RMW
+ *      rmw_hash,        \  // Type hash string used in RMS
  *      <fields ...>     \  // BTYPE - 1 item - aliased type
  * )                     \  // CTYPE - 1 or more items (struct members) each
  *                          //         wrapped in FIELD() or ARRAY() with no commas between them.
- * New lines need to be escaped with \
- *
+ * note: New lines need to be escaped with \
  */
 #define MSG_LIST(BTYPE, CTYPE, TTYPE, FIELD, ARRAY) \
     BTYPE(ros_Int32,                            \
@@ -108,33 +109,32 @@
         FIELD(ros_TwistWithCovariance, twist)   \
     )                                           \
 
-/*
- * SRV_LIST(SRV, REQUEST, REPLY, FIELD, ARRAY)
+
+/* SRV_LIST(SRV, REQUEST, REPLY, FIELD, ARRAY)
  *
  * User provided list of service types for creating serdes functions
- * SRV = Top level service name, hash and type
- * REQUEST = Request type, implemented as struct
- * REQUEST = Reply type, implemented as struct
- *      FIELD = Field of request/reply type FUNC(type, name)
- *      ARRAY = Array field of request/reply type FUNC(type, name, size)
+ * SRV = Top level service name, hash and type. FUNC(srv_name, rmw_name, rmw_hash, <request>, <reply>)
+ *      REQUEST / REPLY = Request/reply type, implemented as struct. FUNC(<fields...>)
+ *          FIELD = Field of request/reply member. FUNC(type, name)
+ *          ARRAY = Array field of request/reply member. FUNC(type, name, size)
  *
  * Each entry in table must have the following format
  * SRV(                  \
- *      type_cname,      \  // Name of type used in code
- *      type_rmw_name,   \  // Full string name of type used in RMW
- *      type_rihs_hash,  \  // Type hash string used in RMS
+ *      srv_name,        \  // Name of service type
+ *      rmw_name,        \  // Full string name of type used in RMW
+ *      rmw_hash,        \  // Type hash string used in RMW
  *      REQUEST(         \
- *          <fields ...> \  // List of fields using FIELD macro with no commas between
+ *          <fields ...> \  // List of fields using FIELD/ARRAY macro with no commas between
  *      )                \
  *      REPLLY(          \
- *          <fields ...> \  // List of fields using FIELD macro with no commas between
+ *          <fields ...> \  // List of fields using FIELD/ARRAY macro with no commas between
  *      )                \
  * )                     \
- * // note: New lines need to be escaped with \
- *
+ * note: New lines need to be escaped with \
+ *       Name of generated request/reply types is request_<srv_name> and reply_<srv_name>
  */
-#define SRV_LIST(SRV, REQUEST, REPLY, FIELD, ARRAY)      \
-    SRV(srv_add2Ints,                                       \
+#define SRV_LIST(SRV, REQUEST, REPLY, FIELD, ARRAY)     \
+    SRV(srv_add2Ints,                                   \
         "example_interfaces::srv::dds_::AddTwoInts",    \
         "e118de6bf5eeb66a2491b5bda11202e7b68f198d6f67922cf30364858239c81a", \
         REQUEST(                                        \

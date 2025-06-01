@@ -39,7 +39,12 @@ void publish_odometry(){
     };
     printf("Publishing odometery...\n");
     size_t len = ps_serialize(pub_buf, &odom, 1024);
-    picoros_publish(&pub_odo, pub_buf, len);
+    if (len > 0){
+        picoros_publish(&pub_odo, pub_buf, len);
+    }
+    else{
+        printf("Odometry message serialization error.");
+    }
 }
 
 int main(int argc, char **argv){

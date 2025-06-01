@@ -20,7 +20,7 @@ Provides abstractions for ROS:
 Poor man's type abstractions and CDR serialization/deserialization. 
 
 ## Supported targets
-**Pico-ROS** is intended to be deployed on resource constrained devices wherever `zenoh-pico` will run. 
+**Pico-ROS** is intended to be deployed on resource constrained embedded devices wherever `zenoh-pico` will run. 
 Eventhough it is easy to use on linux, it doesn't intend to compete with [rclc](https://github.com/ros2/rclc) or [rclcpp](https://github.com/ros2/rclcpp)
 which have more features.
 

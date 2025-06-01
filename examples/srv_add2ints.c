@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include "picoros.h"
 #include "picoserdes.h"
-#include "ucdr/microcdr.h"
 
 // Use command line arguments to change default values
 #define MODE        "client"
@@ -14,20 +13,18 @@ extern int picoros_parse_args(int argc, char **argv,  picoros_interface_t* ifx);
 // Service callback
 picoros_service_reply_t add2_srv_cb(uint8_t* request, size_t size, void* user_data);
 
-// Buffer for service reply, used from zenoh threads
+// Static buffer for service reply serialization, used from zenoh threads
 uint8_t srv_buf[1024];
-
 
 // Example service
 picoros_service_t add2_srv = {
     .topic = {
         .name = "add2",
-        .type = ROSTYPE_NAME(srv_add2Ints),//"example_interfaces::srv::dds_::AddTwoInts",
-        .rihs_hash = ROSTYPE_HASH(srv_add2Ints), //"e118de6bf5eeb66a2491b5bda11202e7b68f198d6f67922cf30364858239c81a",
+        .type = ROSTYPE_NAME(srv_add2Ints),
+        .rihs_hash = ROSTYPE_HASH(srv_add2Ints),
     },
     .user_callback = add2_srv_cb,
 };
-
 
 // Example node
 picoros_node_t node = {
@@ -39,17 +36,13 @@ picoros_service_reply_t add2_srv_cb(uint8_t* rx_data, size_t rx_size, void* user
     // request, response structs
     request_srv_add2Ints reqest = {};
     reply_srv_add2Ints response = {};
-
     // deserialize request
     ps_deserialize(rx_data, &reqest, rx_size);
-
     // apply service
     response.sum = reqest.a + reqest.b;
     printf("Service add2(a:%ld, b:%ld) called. Sending reply sum:%ld\n", reqest.a, reqest.b, response.sum);
-
     // serialize reply
     size_t len = ps_serialize(srv_buf, &response , 1024);
-
     // send reply
     picoros_service_reply_t reply = {
         .length = len,
@@ -65,13 +58,11 @@ int main(int argc, char **argv){
         .locator = LOCATOR,
     };
     int ret = picoros_parse_args(argc, argv , &ifx);
-
     if(ret != 0){
         return ret;
     }
 
     printf("Starting pico-ros interface %s %s\n", ifx.mode, ifx.locator );
-
     while (picoros_interface_init(&ifx) == PICOROS_NOT_READY){
         printf("Waiting RMW init...\n");
         z_sleep_s(1);

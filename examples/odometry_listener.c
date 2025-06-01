@@ -30,10 +30,14 @@ picoros_node_t node = {
 
 void odometry_callback(uint8_t* rx_data, size_t data_len){
     ros_Odometry odo = {};
-    ps_deserialize(rx_data, &odo, data_len);
-    printf("New odometry frame:%s @%ds position x:%f y:%f z:%f\n",
-           odo.child_frame_id, odo.header.time.sec,
-           odo.pose.pose.position.x, odo.pose.pose.position.y, odo.pose.pose.position.z);
+    if (ps_deserialize(rx_data, &odo, data_len)){
+        printf("New odometry frame:%s @%ds position x:%f y:%f z:%f\n",
+            odo.child_frame_id, odo.header.time.sec,
+            odo.pose.pose.position.x, odo.pose.pose.position.y, odo.pose.pose.position.z);
+    }
+    else{
+        printf("Odometry message deserialization error\n");
+    }
 }
 
 
