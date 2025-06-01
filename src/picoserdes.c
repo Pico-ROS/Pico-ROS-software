@@ -30,11 +30,11 @@
 
 // type name constants list
 #define TYPE_NAME(TYPE, NAME, HASH, ...) char TYPE##_name[] = NAME;
-ROSTYPE_LIST(TYPE_NAME, TYPE_NAME, TYPE_NAME, PS_UNUSED, PS_UNUSED)
+MSG_LIST(TYPE_NAME, TYPE_NAME, TYPE_NAME, PS_UNUSED, PS_UNUSED)
 #undef TYPE_HASH
 // type hash constants list
 #define TYPE_HASH(TYPE, NAME, HASH, ...) char TYPE##_hash[] = HASH;
-ROSTYPE_LIST(TYPE_HASH, TYPE_HASH, TYPE_HASH, PS_UNUSED, PS_UNUSED)
+MSG_LIST(TYPE_HASH, TYPE_HASH, TYPE_HASH, PS_UNUSED, PS_UNUSED)
 #undef TYPE_HASH
 
 /* Private function prototypes -----------------------------------------------*/
@@ -149,7 +149,7 @@ void ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) {         \
 void ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) {         \
     __VA_ARGS__                                             \
 }
-ROSTYPE_LIST(PS_SER_FUNC_BIMPL, PS_SER_FUNC_CIMPL, PS_SER_FUNC_BIMPL, PS_SER_TYPE, PS_SER_ARRAY)
-ROSTYPE_LIST(PS_DES_FUNC_BIMPL, PS_DES_FUNC_CIMPL, PS_DES_FUNC_BIMPL, PS_DES_TYPE, PS_DES_ARRAY)
+MSG_LIST(PS_SER_FUNC_BIMPL, PS_SER_FUNC_CIMPL, PS_SER_FUNC_BIMPL, PS_SER_TYPE, PS_SER_ARRAY)
+MSG_LIST(PS_DES_FUNC_BIMPL, PS_DES_FUNC_CIMPL, PS_DES_FUNC_BIMPL, PS_DES_TYPE, PS_DES_ARRAY)
 
 

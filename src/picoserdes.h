@@ -18,8 +18,7 @@
 #include <stddef.h>
 #include "ucdr/microcdr.h"
 
-/* Exported macro ------------------------------------------------------------*/
-/* Table of supported types
+/* User provided list of message types for creating serdes functions
  * BTYPE = Basic type - only one member, implemented as typedef
  * TTYPE = Typedef type - alias for ros type, implemented as typedef
  *         (seperated to disable types in _Generic calls)
@@ -38,90 +37,15 @@
  * New lines need to be escaped with \
  *
  */
-#define ROSTYPE_LIST(BTYPE, CTYPE, TTYPE, FIELD, ARRAY) \
-    BTYPE(ros_Int32,                            \
-        "example_interfaces::msg::dds_::Int32", \
-        "5cd04cd7f3adb9d6c6064c316047b24c76622eb89144f300b536d657fd55e652",                                   \
-        int32_t                                 \
-    )                                           \
-    BTYPE(ros_Int64,                            \
-        "example_interfaces::msg::dds_::Int64", \
-        "1b3b9a6502f560d079520c73c685a9550e5a1838d2cefd537fe0aba75a3639a0",                                   \
-        int64_t                                 \
-    )                                           \
-    BTYPE(ros_String,                           \
-        "std_msgs::msg::dds_::String",          \
-        "df668c740482bbd48fb39d76a70dfd4bd59db1288021743503259e948f6b1a18", \
-        rstring                                 \
-    )                                           \
-    CTYPE(ros_Vector3,                          \
-        "geometry_msgs::msg::dds_::Vector3",    \
-        "cc12fe83e4c02719f1ce8070bfd14aecd40f75a96696a67a2a1f37f7dbb0765d", \
-        FIELD(double, x)                        \
-        FIELD(double, y)                        \
-        FIELD(double, z)                        \
-    )                                           \
-    CTYPE(ros_Quaternion,                       \
-        "geometry_msgs::msg::dds_::Quaternion", \
-        "8a765f66778c8ff7c8ab94afcc590a2ed5325a1d9a076ffff38fbce36f458684", \
-        FIELD(double, x)                        \
-        FIELD(double, y)                        \
-        FIELD(double, z)                        \
-        FIELD(double, w)                        \
-    )                                           \
-    TTYPE(ros_Point,                            \
-        "geometry_msgs::msg::dds_::Point",      \
-        "6963084842a9b04494d6b2941d11444708d892da2f4b09843b9c43f42a7f6881",                                   \
-         ros_Vector3                            \
-    )                                           \
-    CTYPE(ros_Time,                             \
-        "builtin_interfaces::msg::dds_::Time",  \
-        "b106235e25a4c5ed35098aa0a61a3ee9c9b18d197f398b0e4206cea9acf9c197",                                   \
-        FIELD(int32_t, sec)                     \
-        FIELD(int32_t, nsec)                    \
-    )                                           \
-    CTYPE(ros_Header,                           \
-        "builtin_interfaces::msg::dds_::Header",\
-        "f49fb3ae2cf070f793645ff749683ac6b06203e41c891e17701b1cb597ce6a01",                                   \
-        FIELD(ros_Time, time)                   \
-        FIELD(rstring, frame_id)                \
-    )                                           \
-    CTYPE(ros_Pose,                             \
-        "geometry_msgs::msg::dds_::Pose",       \
-        "d501954e9476cea2996984e812054b68026ae0bfae789d9a10b23daf35cc90fa", \
-        FIELD(ros_Point, position)              \
-        FIELD(ros_Quaternion, orientation)      \
-    )                                           \
-    CTYPE(ros_Twist,                            \
-        "geometry_msgs::msg::dds_::Twist",      \
-        "9c45bf16fe0983d80e3cfe750d6835843d265a9a6c46bd2e609fcddde6fb8d2a", \
-        FIELD(ros_Vector3, linear)              \
-        FIELD(ros_Vector3, angulat)             \
-    )                                           \
-    CTYPE(ros_PoseWithCovariance,               \
-        "geometry_msgs::msg::dds_::PoseWithCovariance", \
-        "9a7c0fd234b7f45c6098745ecccd773ca1085670e64107135397aee31c02e1bb",                                   \
-        FIELD(ros_Pose, pose)                   \
-        ARRAY(double, covariance, 36)           \
-    )                                           \
-    CTYPE(ros_TwistWithCovariance,              \
-        "geometry_msgs::msg::dds_::TwistWithCovariance", \
-        "49f574f033f095d8b6cd1beaca5ca7925e296e84af1716d16c89d38b059c8c18",                                   \
-        FIELD(ros_Twist, twist)                 \
-        ARRAY(double, covariance, 36)           \
-    )                                           \
-    CTYPE(ros_Odometry,                         \
-        "nav_msgs::msg::dds_::Odometry",        \
-        "3cc97dc7fb7502f8714462c526d369e35b603cfc34d946e3f2eda2766dfec6e0", \
-        FIELD(ros_Header, header)               \
-        FIELD(rstring, child_frame_id)          \
-        FIELD(ros_PoseWithCovariance, pose)     \
-        FIELD(ros_TwistWithCovariance, twist)   \
-    )                                           \
+#ifndef USER_TYPE_FILE
+    // empty list
+    #define MSG_LIST(BTYPE, CTYPE, TTYPE, FIELD, ARRAY)
+#else
+    // user list
+    #include USER_TYPE_FILE
+#endif
 
-
-#define PS_UNUSED(...)
-
+/* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef char* rstring;
 
@@ -133,7 +57,7 @@ typedef char* rstring;
     typedef struct { \
         __VA_ARGS__ \
     }TYPE;
-ROSTYPE_LIST(BTYPE_DECLARE, CTYPE_DECLARE, BTYPE_DECLARE, FIELD_EXPAND, ARRAY_EXPAND)
+MSG_LIST(BTYPE_DECLARE, CTYPE_DECLARE, BTYPE_DECLARE, FIELD_EXPAND, ARRAY_EXPAND)
 #undef FIELD_EXPAND
 #undef BTYPE_DECLARE
 #undef CTYPE_DECLARE
@@ -146,15 +70,16 @@ typedef struct{
 }ucdr_writer_t;
 
 /* Exported constants --------------------------------------------------------*/
+#define PS_UNUSED(...)
 
 // string name constants list
 #define TYPE_NAME(TYPE, NAME, HASH, ...) extern char TYPE##_name[];
-ROSTYPE_LIST(TYPE_NAME, TYPE_NAME, TYPE_NAME, PS_UNUSED, PS_UNUSED)
+MSG_LIST(TYPE_NAME, TYPE_NAME, TYPE_NAME, PS_UNUSED, PS_UNUSED)
 #undef TYPE_NAME
 
 // type hash constants list
 #define TYPE_HASH(TYPE, NAME, HASH, ...) extern char TYPE##_hash[];
-ROSTYPE_LIST(TYPE_HASH, TYPE_HASH, TYPE_HASH, PS_UNUSED, PS_UNUSED)
+MSG_LIST(TYPE_HASH, TYPE_HASH, TYPE_HASH, PS_UNUSED, PS_UNUSED)
 #undef TYPE_HASH
 
 #define ROSTYPE_NAME(TYPE) &TYPE##_name[0]
@@ -165,13 +90,13 @@ ROSTYPE_LIST(TYPE_HASH, TYPE_HASH, TYPE_HASH, PS_UNUSED, PS_UNUSED)
 // type serialization function declarations
 #define PS_SER_FUNC_DEF(TYPE, ...) \
     void ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg);
-ROSTYPE_LIST(PS_SER_FUNC_DEF, PS_SER_FUNC_DEF, PS_SER_FUNC_DEF, PS_UNUSED, PS_UNUSED)
+MSG_LIST(PS_SER_FUNC_DEF, PS_SER_FUNC_DEF, PS_SER_FUNC_DEF, PS_UNUSED, PS_UNUSED)
 #undef PS_SER_FUNC_DEF
 
 // type derialization function declarations
 #define PS_DES_FUNC_DEF(TYPE, ...) \
     void ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg);
-ROSTYPE_LIST(PS_DES_FUNC_DEF, PS_DES_FUNC_DEF, PS_DES_FUNC_DEF, PS_UNUSED, PS_UNUSED)
+MSG_LIST(PS_DES_FUNC_DEF, PS_DES_FUNC_DEF, PS_DES_FUNC_DEF, PS_UNUSED, PS_UNUSED)
 #undef PS_DES_FUNC_DEF
 
 // Generic serdes function macros
@@ -186,7 +111,7 @@ ROSTYPE_LIST(PS_DES_FUNC_DEF, PS_DES_FUNC_DEF, PS_DES_FUNC_DEF, PS_UNUSED, PS_UN
         ucdr_init_buffer(&writer, pBUF, MAX);                                           \
         ucdr_serialize_uint32_t(&writer,  0x0100); /*Little endian */                   \
         _Generic((pMSG),                                                                \
-            ROSTYPE_LIST(PS_SEL_SER, PS_SEL_SER, PS_UNUSED, PS_UNUSED, PS_UNUSED)       \
+            MSG_LIST(PS_SEL_SER, PS_SEL_SER, PS_UNUSED, PS_UNUSED, PS_UNUSED)       \
             default: 0                                                                  \
         )(&writer, pMSG);                                                               \
         size_t _ret = ucdr_buffer_length(&writer);                                      \
@@ -197,7 +122,7 @@ ROSTYPE_LIST(PS_DES_FUNC_DEF, PS_DES_FUNC_DEF, PS_DES_FUNC_DEF, PS_UNUSED, PS_UN
         ucdrBuffer reader = {};                                                         \
         ucdr_init_buffer(&reader, pBUF + sizeof(uint32_t), MAX - sizeof(uint32_t));     \
         _Generic((pMSG),                                                                \
-            ROSTYPE_LIST(PS_SEL_DES, PS_SEL_DES, PS_UNUSED, PS_UNUSED, PS_UNUSED)       \
+            MSG_LIST(PS_SEL_DES, PS_SEL_DES, PS_UNUSED, PS_UNUSED, PS_UNUSED)       \
             default: 0                                                                  \
         )(&reader, pMSG);                                                               \
     }

@@ -17,7 +17,7 @@ Provides abstractions for ROS:
  Works with zenoh-pico and depends on zenoh-rmw.
 
 ### picoserdes 
-Poor man ROS type abstractions and cdr serialization deserialization. 
+Poor man's type abstractions and CDR serialization/deserialization. 
 
 ## Supported targets
 **Pico-ROS** is intended to be deployed on resource constrained devices wherever `zenoh-pico` will run. 
@@ -42,6 +42,7 @@ git submodule update --init --recursive
 mkdir build
 cd build
 cmake..
+#cmake.. -DUSER_TYPE_FILE="user_types.h" -DPICOROS_BUILD_EXAMPLES=OFF
 make
 ```
 
@@ -67,3 +68,9 @@ response:
 example_interfaces.srv.AddTwoInts_Response(sum=3)
 
 ```
+
+## Picoserdes typs
+User should provide their own list of types for creating serialization and deserialization functions.
+This type list header file name can be provided with `USER_TYPE_FILE` define when building the library.
+
+See examples/example_types.h for format description and a sample of some standard ROS types.

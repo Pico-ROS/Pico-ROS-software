@@ -10,32 +10,37 @@
 // Common utils
 extern int picoros_parse_args(int argc, char **argv, picoros_interface_t* ifx);
 
-// Subscriber callback
-void odometry_callback(uint8_t* rx_data, size_t data_len);
-
-// Example Subscriber
-picoros_subscriber_t sub_odo = {
+// Example Publisher
+picoros_publisher_t pub_odo = {
     .topic = {
         .name = "odom",
         .type = ROSTYPE_NAME(ros_Odometry),
         .rihs_hash = ROSTYPE_HASH(ros_Odometry),
     },
-    .user_callback = odometry_callback,
 };
 
 // Example node
 picoros_node_t node = {
-    .name = "listener",
+    .name = "talker",
 };
 
-void odometry_callback(uint8_t* rx_data, size_t data_len){
-    ros_Odometry odo = {};
-    ps_deserialize(rx_data, &odo, data_len);
-    printf("New odometry frame:%s @%ds position x:%f y:%f z:%f\n",
-           odo.child_frame_id, odo.header.time.sec,
-           odo.pose.pose.position.x, odo.pose.pose.position.y, odo.pose.pose.position.z);
-}
+// Buffer for publication, used from this thread
+uint8_t pub_buf[1024];
 
+void publish_odometry(){
+    z_clock_t clk = z_clock_now();
+    ros_Odometry odom = {
+        .header = {
+            .frame_id = "odom",
+            .time.nsec = clk.tv_nsec,
+            .time.sec = clk.tv_sec,
+        },
+        .child_frame_id = "base-link",
+    };
+    printf("Publishing odometery...\n");
+    size_t len = ps_serialize(pub_buf, &odom, 1024);
+    picoros_publish(&pub_odo, pub_buf, len);
+}
 
 int main(int argc, char **argv){
     picoros_interface_t ifx = {
@@ -53,13 +58,15 @@ int main(int argc, char **argv){
         printf("Waiting RMW init...\n");
         z_sleep_s(1);
     }
+
     printf("Starting Pico-ROS node %s domain:%d\n", node.name, node.domain_id);
     picoros_node_init(&node);
 
-    printf("Declaring subscriber on %s\n", sub_odo.topic.name);
-    picoros_subscriber_declare(&node, &sub_odo);
+    printf("Declaring publisher on %s\n", pub_odo.topic.name);
+    picoros_publisher_declare(&node, &pub_odo);
 
     while(true){
+        publish_odometry();
         z_sleep_s(1);
     }
     return 0;

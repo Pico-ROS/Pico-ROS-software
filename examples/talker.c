@@ -27,11 +27,6 @@ picoros_node_t node = {
 // Buffer for publication, used from this thread
 uint8_t pub_buf[1024];
 
-// struct {
-//     uint32_t header;
-//     uint8_t buf[1024];
-// }pub_buf = {.header = 0x0100}; // Little-Endian format OMG-CDR specification.
-
 void publish_log(){
     printf("Publishing log...\n");
     char* msg = "Hello from Pico-ROS!";

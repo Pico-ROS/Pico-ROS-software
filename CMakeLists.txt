@@ -4,13 +4,11 @@ file(READ ${CMAKE_CURRENT_SOURCE_DIR}/version.txt version)
 project(pico-ros VERSION ${version} LANGUAGES C)
 
 option(PICOROS_BUILD_EXAMPLES "Build examples" ON)
-option(PICOROS_BUILD_SERDES "Build picoserdes" ON)
 message("PICOROS_BUILD_EXAMPLES: ${PICOROS_BUILD_EXAMPLES}")
 
 if(PICOROS_BUILD_EXAMPLES AND NOT PICOROS_BUILD_SERDES)
 error("PICOROS_BUILD_EXAMPLES needs PICOROS_BUILD_SERDES")
 endif()
-#set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 set(CMAKE_C_STANDARD 11)
 
@@ -21,18 +19,14 @@ if(CMAKE_EXPORT_COMPILE_COMMANDS)
 endif()
 
 set(BUILD_EXAMPLES OFF)
-set(BUILD_TESTING OFF)
-set(BUILD_TESTING OFF)
 set(BUILD_SHARED_LIBS OFF)
 
 # add_definitions(-DZENOH_LOG_DEBUG)
 add_subdirectory(thirdparty/zenoh-pico)
 
-if(PICOROS_BUILD_EXAMPLES OR PICOROS_BUILD_SERDES)
-  set(UCDR_SUPERBUILD OFF)
-  set(UCDR_ISOLATED_INSTALL OFF)
-  add_subdirectory(thirdparty/Micro-CDR)
-endif()
+set(UCDR_SUPERBUILD OFF)
+set(UCDR_ISOLATED_INSTALL OFF)
+add_subdirectory(thirdparty/Micro-CDR)
 
 add_library(picoros STATIC
     src/picoros.c
@@ -50,18 +44,31 @@ add_library(picoserdes STATIC
 target_include_directories(picoserdes PUBLIC
      src/
 )
-
+if (TYPE_FILE)
+  message("USER_TYPE_FILE: ${TYPE_FILE}")
+  target_compile_definitions(picoserdes PUBLIC -DUSER_TYPE_FILE="${TYPE_FILE}")
+endif()
 target_link_libraries(picoros zenohpico::lib)
 target_link_libraries(picoserdes microcdr)
 
 
 ##### EXAMPLES
 if(PICOROS_BUILD_EXAMPLES)
+  add_library(examples_serdes STATIC
+    src/picoserdes.c
+    src/picoserdes.h
+  )
+  target_include_directories(examples_serdes PUBLIC examples)
+  target_compile_definitions(examples_serdes PUBLIC -DUSER_TYPE_FILE="example_types.h")
+  target_link_libraries(examples_serdes microcdr)
+
   set(EXAMPLE_LIBS
             picoros
-            picoserdes
+            examples_serdes
   )
   set(EXAMPLE_SRC
+            src/picoserdes.c
+            src/picoserdes.h
             examples/common.c
   )
   set(EXAMPLE_INCLUDE
@@ -84,4 +91,8 @@ if(PICOROS_BUILD_EXAMPLES)
   add_executable(odometry_listener examples/odometry_listener.c  ${EXAMPLE_SRC})
   target_include_directories(odometry_listener PUBLIC ${EXAMPLE_INCLUDE})
   target_link_libraries(odometry_listener PRIVATE  ${EXAMPLE_LIBS})
+
+  add_executable(odometry_publisher examples/odometry_publisher.c  ${EXAMPLE_SRC})
+  target_include_directories(odometry_publisher PUBLIC ${EXAMPLE_INCLUDE})
+  target_link_libraries(odometry_publisher PRIVATE  ${EXAMPLE_LIBS})
 endif()
