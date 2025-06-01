@@ -168,7 +168,10 @@ static void srv_data_handler(z_loaned_query_t *query, void *arg) {
         options.attachment = z_bytes_move(&tx_attachment);
 
         // send reply
-        z_query_reply(query, z_query_keyexpr(query), z_bytes_move(&reply_payload), &options);
+        z_result_t res = z_query_reply(query, z_query_keyexpr(query), z_bytes_move(&reply_payload), &options);
+        if (res != Z_OK){
+            _PR_LOG("Error sending service reply. Error:%d\n", res);
+        }
 
         // cleanup
         z_bytes_drop(z_bytes_move(&reply_payload));
@@ -180,50 +183,51 @@ static void srv_data_handler(z_loaned_query_t *query, void *arg) {
 }
 
 static void srv_drop_handler(void *arg) {
-
+ _PR_LOG("Drop srv callback\n");
 }
 
 /* Public functions ----------------------------------------------------------*/
 
 picoros_res_t picoros_interface_init(picoros_interface_t* ifx) {
-	z_result_t res = Z_OK;
+    z_result_t res = Z_OK;
     z_owned_config_t config;
-	z_config_default(&config);
+    z_config_default(&config);
 
-	_PR_LOG("Configuring Zenoh session...\r\n");
+    _PR_LOG("Configuring Zenoh session...\r\n");
     zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_MODE_KEY, ifx->mode);
     if (ifx->locator) {
         if (strcmp(ifx->mode, "client") == 0) {
             zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_CONNECT_KEY, ifx->locator);
-        } else {
+        }
+        else {
             zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_LISTEN_KEY, ifx->locator);
         }
     }
 
-	_PR_LOG("Opening Zenoh session...\r\n");
-	if ((res = z_open(&s_wrapper, z_config_move(&config), NULL)) != Z_OK) {
-	   _PR_LOG("Unable to open Zenoh session! Error:%d\n", res);
-	   return PICOROS_NOT_READY;
-	}
-	_PR_LOG("Zenoh setup finished!\r\n");
+    _PR_LOG("Opening Zenoh session...\r\n");
+    if ((res = z_open(&s_wrapper, z_config_move(&config), NULL)) != Z_OK) {
+        _PR_LOG("Unable to open Zenoh session! Error:%d\n", res);
+        return PICOROS_NOT_READY;
+    }
+    _PR_LOG("Zenoh setup finished!\r\n");
 
-	// Start read and lease tasks for zenoh-pico
-	if ((res = zp_start_read_task(z_session_loan_mut(&s_wrapper), NULL)) != Z_OK
-	|| (res = zp_start_lease_task(z_session_loan_mut(&s_wrapper), NULL)) != Z_OK
-	){
-	   z_session_drop(z_session_move(&s_wrapper));
-	   _PR_LOG("Failed to start read/lease tasks! Error:%d\n", res);
-	   return PICOROS_ERROR;
-	}
+    // Start read and lease tasks for zenoh-pico
+    if ((res = zp_start_read_task(z_session_loan_mut(&s_wrapper), NULL)) != Z_OK
+    || (res = zp_start_lease_task(z_session_loan_mut(&s_wrapper), NULL)) != Z_OK
+    ){
+        z_session_drop(z_session_move(&s_wrapper));
+        _PR_LOG("Failed to start read/lease tasks! Error:%d\n", res);
+        return PICOROS_ERROR;
+    }
 
 	return PICOROS_OK;
 }
 
 picoros_res_t picoros_node_init(picoros_node_t* node){
-	z_result_t res = Z_OK;
-	char keyexpr[KEYEXPR_SIZE];
+    z_result_t res = Z_OK;
+    char keyexpr[KEYEXPR_SIZE];
 
-	rmw_zenoh_node_liveliness_keyexpr(node, keyexpr);
+    rmw_zenoh_node_liveliness_keyexpr(node, keyexpr);
     z_view_keyexpr_t ke;
 
     z_view_keyexpr_from_str(&ke, keyexpr);

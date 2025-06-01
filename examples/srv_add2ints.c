@@ -34,13 +34,13 @@ picoros_node_t node = {
 // Service callback
 picoros_service_reply_t add2_srv_cb(uint8_t* rx_data, size_t rx_size, void* user_data){
     // request, response structs
-    request_srv_add2Ints reqest = {};
+    request_srv_add2Ints request = {};
     reply_srv_add2Ints response = {};
     // deserialize request
-    ps_deserialize(rx_data, &reqest, rx_size);
+    ps_deserialize(rx_data, &request, rx_size);
     // apply service
-    response.sum = reqest.a + reqest.b;
-    printf("Service add2(a:%ld, b:%ld) called. Sending reply sum:%ld\n", reqest.a, reqest.b, response.sum);
+    response.sum = request.a + request.b;
+    printf("Service add2(a:%ld, b:%ld) called. Sending reply sum:%ld\n", request.a, request.b, response.sum);
     // serialize reply
     size_t len = ps_serialize(srv_buf, &response , 1024);
     // send reply
