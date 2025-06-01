@@ -23,6 +23,8 @@
     TYPE(int32_t)               \
     TYPE(uint32_t)              \
     TYPE(int64_t)               \
+    TYPE(uint64_t)              \
+    TYPE(float)                 \
     TYPE(double)                \
     TYPE(rstring)               \
 
