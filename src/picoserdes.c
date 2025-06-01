@@ -31,10 +31,12 @@
 // type name constants list
 #define TYPE_NAME(TYPE, NAME, HASH, ...) char TYPE##_name[] = NAME;
 MSG_LIST(TYPE_NAME, TYPE_NAME, TYPE_NAME, PS_UNUSED, PS_UNUSED)
+SRV_LIST(TYPE_NAME, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
 #undef TYPE_HASH
 // type hash constants list
 #define TYPE_HASH(TYPE, NAME, HASH, ...) char TYPE##_hash[] = HASH;
 MSG_LIST(TYPE_HASH, TYPE_HASH, TYPE_HASH, PS_UNUSED, PS_UNUSED)
+SRV_LIST(TYPE_HASH, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
 #undef TYPE_HASH
 
 /* Private function prototypes -----------------------------------------------*/
@@ -133,23 +135,32 @@ void ucdr_seq_end(ucdr_writer_t* writer){
 #define PS_SER_ARRAY(TYPE, FIELD, NUMBER)   ps_ser_seq_##TYPE(writer, msg->FIELD, NUMBER);
 #define PS_DES_TYPE(TYPE, FIELD)            ps_des_##TYPE(reader, &msg->FIELD);
 #define PS_DES_ARRAY(TYPE, FIELD, NUMBER)   ps_des_seq_##TYPE(reader, msg->FIELD, NUMBER);
-#define PS_SER_FUNC_BIMPL(TYPE, NAME, HASH, TYPE2 ...)      \
-void ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg) {         \
-    ps_ser_##TYPE2(writer, msg);                            \
+#define PS_SER_MSG_BIMPL(TYPE, NAME, HASH, TYPE2 ...)                       \
+void ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg) {                         \
+    ps_ser_##TYPE2(writer, msg);                                            \
 }
-#define PS_SER_FUNC_CIMPL(TYPE, NAME, HASH, ...)            \
-void ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg) {         \
-    __VA_ARGS__                                             \
+#define PS_SER_MSG_CIMPL(TYPE, NAME, HASH, ...)                             \
+void ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg) {                         \
+    __VA_ARGS__                                                             \
 }
-#define PS_DES_FUNC_BIMPL(TYPE, NAME, HASH, TYPE2 ...)      \
-void ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) {         \
-    ps_des_##TYPE2(reader, msg);                            \
+#define PS_DES_MSG_BIMPL(TYPE, NAME, HASH, TYPE2 ...)                       \
+void ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) {                         \
+    ps_des_##TYPE2(reader, msg);                                            \
 }
-#define PS_DES_FUNC_CIMPL(TYPE, NAME, HASH, ...)            \
-void ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) {         \
-    __VA_ARGS__                                             \
+#define PS_DES_MSG_CIMPL(TYPE, NAME, HASH, ...)                             \
+void ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) {                         \
+    __VA_ARGS__                                                             \
 }
-MSG_LIST(PS_SER_FUNC_BIMPL, PS_SER_FUNC_CIMPL, PS_SER_FUNC_BIMPL, PS_SER_TYPE, PS_SER_ARRAY)
-MSG_LIST(PS_DES_FUNC_BIMPL, PS_DES_FUNC_CIMPL, PS_DES_FUNC_BIMPL, PS_DES_TYPE, PS_DES_ARRAY)
+#define EXP_TOKEN(...) __VA_ARGS__
+#define PS_SER_SRV(TYPE, NAME, HASH, REQ, REP)                              \
+void ps_ser_##TYPE##_request(ucdrBuffer* writer, request_##TYPE* msg){ REQ }\
+void ps_ser_##TYPE##_reply(ucdrBuffer* writer, reply_##TYPE* msg) { REP }
+#define PS_DES_SRV(TYPE, NAME, HASH, REQ, REP)                              \
+void ps_des_##TYPE##_request(ucdrBuffer* reader, request_##TYPE* msg){ REQ }\
+void ps_des_##TYPE##_reply(ucdrBuffer* reader, reply_##TYPE* msg) { REP }
 
+MSG_LIST(PS_SER_MSG_BIMPL, PS_SER_MSG_CIMPL, PS_SER_MSG_BIMPL, PS_SER_TYPE, PS_SER_ARRAY)
+MSG_LIST(PS_DES_MSG_BIMPL, PS_DES_MSG_CIMPL, PS_DES_MSG_BIMPL, PS_DES_TYPE, PS_DES_ARRAY)
+SRV_LIST(PS_SER_SRV, EXP_TOKEN, EXP_TOKEN, PS_SER_TYPE, PS_SER_ARRAY)
+SRV_LIST(PS_DES_SRV, EXP_TOKEN, EXP_TOKEN, PS_DES_TYPE, PS_DES_ARRAY)
 

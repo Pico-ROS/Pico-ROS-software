@@ -108,5 +108,42 @@
         FIELD(ros_TwistWithCovariance, twist)   \
     )                                           \
 
+/*
+ * SRV_LIST(SRV, REQUEST, REPLY, FIELD, ARRAY)
+ *
+ * User provided list of service types for creating serdes functions
+ * SRV = Top level service name, hash and type
+ * REQUEST = Request type, implemented as struct
+ * REQUEST = Reply type, implemented as struct
+ *      FIELD = Field of request/reply type FUNC(type, name)
+ *      ARRAY = Array field of request/reply type FUNC(type, name, size)
+ *
+ * Each entry in table must have the following format
+ * SRV(                  \
+ *      type_cname,      \  // Name of type used in code
+ *      type_rmw_name,   \  // Full string name of type used in RMW
+ *      type_rihs_hash,  \  // Type hash string used in RMS
+ *      REQUEST(         \
+ *          <fields ...> \  // List of fields using FIELD macro with no commas between
+ *      )                \
+ *      REPLLY(          \
+ *          <fields ...> \  // List of fields using FIELD macro with no commas between
+ *      )                \
+ * )                     \
+ * // note: New lines need to be escaped with \
+ *
+ */
+#define SRV_LIST(SRV, REQUEST, REPLY, FIELD, ARRAY)      \
+    SRV(srv_add2Ints,                                       \
+        "example_interfaces::srv::dds_::AddTwoInts",    \
+        "e118de6bf5eeb66a2491b5bda11202e7b68f198d6f67922cf30364858239c81a", \
+        REQUEST(                                        \
+            FIELD(ros_Int64, a)                         \
+            FIELD(ros_Int64, b)                         \
+        ),                                              \
+        REPLY(                                          \
+            FIELD(ros_Int64, sum)                       \
+        )                                               \
+    )
 
 #endif /* EXAMPLE_TYPES_H */
