@@ -15,6 +15,7 @@
 /* Private macro -------------------------------------------------------------*/
 // Base types for which we have external serialization functions
 #define BASE_TYPES_LIST(TYPE)   \
+    TYPE(bool)                  \
     TYPE(int8_t)                \
     TYPE(uint8_t)               \
     TYPE(int16_t)               \
@@ -43,21 +44,21 @@ SRV_LIST(TYPE_HASH, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
 /* Private functions ---------------------------------------------------------*/
 
 // Base types serialization / deserialization wrappers
-#define PS_SER_BASE(TYPE)                                                       \
+#define PS_SER_BASE(TYPE)                                                              \
 inline bool ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg) {                             \
     return ucdr_serialize_##TYPE(writer, *msg);                                        \
 }
-#define PS_SER_BASE_SEQ(TYPE)                                                   \
+#define PS_SER_BASE_SEQ(TYPE)                                                          \
 inline bool ps_ser_seq_##TYPE(ucdrBuffer* writer, TYPE* msg, uint32_t number) {        \
     return ucdr_serialize_array_##TYPE(writer, msg, number);                           \
 }
-#define PS_DES_BASE(TYPE)                                                       \
+#define PS_DES_BASE(TYPE)                                                              \
 inline bool ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) {                             \
     return ucdr_deserialize_##TYPE(reader, msg);                                       \
 }
-#define PS_DES_BASE_SEQ(TYPE)                                                   \
+#define PS_DES_BASE_SEQ(TYPE)                                                          \
 inline bool ps_des_seq_##TYPE(ucdrBuffer* reader, TYPE* msg, uint32_t max_number) {    \
-    uint32_t len = 0;                                                           \
+    uint32_t len = 0;                                                                  \
     return ucdr_deserialize_sequence_##TYPE(reader, msg, max_number, &len);            \
 }
 BASE_TYPES_LIST(PS_SER_BASE)

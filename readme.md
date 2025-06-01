@@ -69,7 +69,7 @@ example_interfaces.srv.AddTwoInts_Response(sum=3)
 
 ```
 
-## Picoserdes typs
+## Picoserdes types
 User should provide their own list of types for creating serialization and deserialization functions.
 This type list header file name can be provided with `USER_TYPE_FILE` define when building the library.
 
