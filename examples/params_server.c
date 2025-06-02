@@ -133,21 +133,13 @@ void* api_param_ref(char* name){
 }
 
 ros_ParameterDescriptor api_param_describe(void* param){
-    ros_ParameterDescriptor ret = {};
-    if (param != NULL) {
-        parameter_t* p = (parameter_t*)param;
-        ret = p->desc;
-    }
-    return ret;
+    parameter_t* p = (parameter_t*)param;
+    return p->desc;
 }
 
 ros_ParameterValue  api_param_get(void* param){
-    ros_ParameterValue ret = {};
-    if (param != NULL){
-        parameter_t* p = (parameter_t*)param;
-        ret = p->val;
-    }
-    return ret;
+    parameter_t* p = (parameter_t*)param;
+    return p->val;
 }
 
 ros_ParameterType api_param_type(void* param){

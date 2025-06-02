@@ -209,36 +209,42 @@ static size_t get_params_value(picoparams_server_t* server, ucdrBuffer* reader, 
     ucdr_serialize_uint32_t(writer, n_targets);
     for (int i = 0; i < n_targets; i++){
        void* param = server->interface.f_ref(target_params[i]);
-       ros_ParameterValue val = server->interface.f_get(param);
+       ros_ParameterValue val = {};
+       if (param){
+           server->interface.f_get(param);
+       }
        serialize_ros_ParameterValue(writer, &val);
     }
     return (ucdr_buffer_length(writer));
 }
 
 static size_t set_params_value(picoparams_server_t* server, ucdrBuffer* reader, ucdrBuffer* writer){
-       uint32_t n_targets = 0;
-       ucdr_deserialize_uint32_t(reader, &n_targets);
-       char* path = NULL;
+    uint32_t n_targets = 0;
+    char* path = NULL;
+    ucdr_deserialize_uint32_t(reader, &n_targets);
 
-       ucdr_serialize_uint32_t(writer, n_targets);
-       for (int i = 0; i < n_targets; i++){
-           ucdr_deserialize_rstring(reader, &path);
-           void* param = server->interface.f_ref(path);
-
-           ros_ParameterValue val = {};
-           deserialize_ros_ParameterValue(reader, &val);
-           char* error_msg = NULL;
-           bool status = server->interface.f_set(param, &val, &error_msg);
-           ucdr_serialize_bool(writer, status);
-           if (status){
-               ucdr_serialize_uint32_t(writer, 0);
-           }
-           else{
-               ucdr_serialize_string(writer, error_msg);
-           }
-       }
-
-       return (ucdr_buffer_length(writer));
+    ucdr_serialize_uint32_t(writer, n_targets);
+    for (int i = 0; i < n_targets; i++){
+        ucdr_deserialize_rstring(reader, &path);
+        void* param = server->interface.f_ref(path);
+        if(param == NULL){
+            ucdr_serialize_bool(writer, false);
+            ucdr_serialize_string(writer, "Parameter not found");
+            continue;
+        }
+        ros_ParameterValue val = {};
+        deserialize_ros_ParameterValue(reader, &val);
+        char* error_msg = NULL;
+        bool status = server->interface.f_set(param, &val, &error_msg);
+        ucdr_serialize_bool(writer, status);
+        if (status){
+            ucdr_serialize_uint32_t(writer, 0);
+        }
+        else{
+            ucdr_serialize_string(writer, error_msg);
+        }
+    }
+    return (ucdr_buffer_length(writer));
 }
 
 static size_t get_params_type(picoparams_server_t* server, ucdrBuffer* reader, ucdrBuffer* writer){
@@ -249,9 +255,13 @@ static size_t get_params_type(picoparams_server_t* server, ucdrBuffer* reader, u
     ucdr_serialize_uint32_t(writer, n_targets);
     for (int i = 0; i < n_targets; i++){
         void* param = server->interface.f_ref(target_params[i]);
-        ucdr_serialize_uint8_t(writer, server->interface.f_type(param));
+        if (param){
+            ucdr_serialize_uint8_t(writer, server->interface.f_type(param));
+        }
+        else{
+            ucdr_serialize_uint8_t(writer, 0);
+        }
     }
-
     return (ucdr_buffer_length(writer));
 }
 
@@ -263,8 +273,11 @@ static size_t describe_params(picoparams_server_t* server, ucdrBuffer* reader, u
     ucdr_serialize_uint32_t(writer, n_targets);
     for (int i = 0; i < n_targets; i++){
         void* param = server->interface.f_ref(target_params[i]);
-        ros_ParameterDescriptor pdesc = server->interface.f_describe(param);
-        pdesc.name = target_params[i]; // get full param name
+        ros_ParameterDescriptor pdesc = {};
+        if (param){
+            pdesc = server->interface.f_describe(param);
+        }
+        pdesc.name = target_params[i]; // get request param name
         serialize_rcl_ParameterDescriptor(writer, &pdesc);
     }
 
