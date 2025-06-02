@@ -31,7 +31,7 @@ Parameter server implementation build with **picoros** and **picoserdes** with
 application interface allows connecting to custom paramters backend.
 
 ## Supported targets
-**Pico-ROS** is intended to be deployed on resource constrained embedded devices wherever `zenoh-pico` will run. 
+**Pico-ROS** is intended to be deployed on resource constrained embedded devices wherever zenoh-pico will run. 
 Eventhough it is easy to use on linux, it doesn't intend to compete with [rclc](https://github.com/ros2/rclc) or [rclcpp](https://github.com/ros2/rclcpp)
 which have more features.
 
@@ -64,16 +64,16 @@ Run ROS with `zenoh_rmw`([installation instructions](https://github.com/ros2/rmw
 Inside `<repo>/build`:
 
 ```sh
-# first terminal
+# first terminal - run talker node
 ./talker -m client -a <address of ROS zenoh router>
 
-# second terminal
+# second terminal - run listener node
 ./listener -m client -a <address of ROS zenoh router>
 
-# third terminal
+# third terminal - run service server
 ./srv_add2ints -m client -a <address of ROS zenoh router>
 
-# fourth terminal
+# fourth terminal - run parameters server
 ./param_server -m client -a <address of ROS zenoh router>
 
 # fifth terminal on ROS host
@@ -85,4 +85,3 @@ ros2 service call /picoros/add2 example_interfaces/srv/AddTwoInts '{a: 1, b: 2}'
 ros2 param list /picoros
 ```
 
-## Picoserdes types
