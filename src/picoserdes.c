@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file    picoserdes.c
   * @date    2025-May-31
-  * @brief   Description
+  * @brief   Pico CDR serdes
   ******************************************************************************
   */
 
@@ -47,19 +47,19 @@ SRV_LIST(TYPE_HASH, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
 
 // Base types serialization / deserialization wrappers
 #define PS_SER_BASE(TYPE)                                                              \
-inline bool ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg) {                             \
+static inline bool ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg) {                      \
     return ucdr_serialize_##TYPE(writer, *msg);                                        \
 }
 #define PS_SER_BASE_SEQ(TYPE)                                                          \
-inline bool ps_ser_seq_##TYPE(ucdrBuffer* writer, TYPE* msg, uint32_t number) {        \
+static inline bool ps_ser_seq_##TYPE(ucdrBuffer* writer, TYPE* msg, uint32_t number) { \
     return ucdr_serialize_array_##TYPE(writer, msg, number);                           \
 }
 #define PS_DES_BASE(TYPE)                                                              \
-inline bool ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) {                             \
+static inline bool ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) {                      \
     return ucdr_deserialize_##TYPE(reader, msg);                                       \
 }
 #define PS_DES_BASE_SEQ(TYPE)                                                          \
-inline bool ps_des_seq_##TYPE(ucdrBuffer* reader, TYPE* msg, uint32_t max_number) {    \
+static inline bool ps_des_seq_##TYPE(ucdrBuffer* reader, TYPE* msg, uint32_t max_number) {    \
     uint32_t len = 0;                                                                  \
     return ucdr_deserialize_sequence_##TYPE(reader, msg, max_number, &len);            \
 }
@@ -84,6 +84,9 @@ bool ucdr_deserialize_rstring(ucdrBuffer* ub, char** pstring){
 }
 // Wrapper for having consistent names
 bool ucdr_serialize_rstring(ucdrBuffer* writer, char* pstring){
+    if (pstring == NULL){
+        return ucdr_serialize_uint32_t(writer, 0);
+    }
     return ucdr_serialize_string(writer, pstring);
 }
 // Serialize array of string pointers
@@ -150,11 +153,11 @@ void ucdr_seq_end(ucdr_writer_t* writer){
 #define PS_DES_ARRAY(TYPE, FIELD, NUMBER)  \
     if( ps_des_seq_##TYPE(reader, msg->FIELD, NUMBER) != true){ return false; }
 #define PS_SER_MSG_BIMPL(TYPE, NAME, HASH, TYPE2 ...)                                           \
-    inline bool ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg) { return ps_ser_##TYPE2(writer, msg); }
+    bool ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg) { return ps_ser_##TYPE2(writer, msg); }
 #define PS_SER_MSG_CIMPL(TYPE, NAME, HASH, ...)                                                 \
     bool ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg) { __VA_ARGS__ return true; }
 #define PS_DES_MSG_BIMPL(TYPE, NAME, HASH, TYPE2 ...)                                           \
-    inline bool ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) { return ps_des_##TYPE2(reader, msg); }
+    bool ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) { return ps_des_##TYPE2(reader, msg); }
 #define PS_DES_MSG_CIMPL(TYPE, NAME, HASH, ...)                                                 \
     bool ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) { __VA_ARGS__ return true; }
 #define PS_SER_SRV(TYPE, NAME, HASH, REQ, REP)                                                  \

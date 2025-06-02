@@ -4,7 +4,7 @@
 **Pico-ROS** is a small layer above [zenoh-pico](https://github.com/eclipse-zenoh/zenoh-pico) working with [rmw-zenoh](https://github.com/ros2/rmw_zenoh)
 designed to provide easy interaction with ROS.
 
-This repository provides two independant modules:
+This repository provides the following modules:
 
 ### picoros
 Provides abstractions for ROS: 
@@ -14,10 +14,21 @@ Provides abstractions for ROS:
  - Publisher
  - Service server 
 
- Works with zenoh-pico and depends on zenoh-rmw.
+Works with zenoh-pico and depends on zenoh-rmw. Can be used independantly from other modules.
 
 ### picoserdes 
 Poor man's type abstractions and CDR serialization/deserialization. 
+
+Allows generation of serdes functions from user provided header files.
+
+User should provide their own list of types for creating serialization and deserialization functions.
+This type list header file name can be provided with `USER_TYPE_FILE` define when building the library.
+
+See examples/example_types.h for format description and a sample of some standard ROS types.
+
+### picoparams
+Parameter server implementation build with **picoros** and **picoserdes** with
+application interface allows connecting to custom paramters backend.
 
 ## Supported targets
 **Pico-ROS** is intended to be deployed on resource constrained embedded devices wherever `zenoh-pico` will run. 
@@ -35,6 +46,7 @@ which have more features.
  - [rmw-zenoh](https://github.com/ros2/rmw_zenoh). Needed for correct ROS interaction.
 
 ## Building
+
 ```sh
 git clone <repo>
 cd <repo_path>
@@ -49,7 +61,8 @@ make
 ## Running examples
 Run ROS with `zenoh_rmw`([installation instructions](https://github.com/ros2/rmw_zenoh?tab=readme-ov-file#installation))
 
-Inside `<repo>/build`
+Inside `<repo>/build`:
+
 ```sh
 # first terminal
 ./talker -m client -a <address of ROS zenoh router>
@@ -61,16 +74,15 @@ Inside `<repo>/build`
 ./srv_add2ints -m client -a <address of ROS zenoh router>
 
 # fourth terminal
-<ROS_HOST>:~$ ros2 service call /picoros/add2 example_interfaces/srv/AddTwoInts '{a: 1, b: 2}'
-requester: making request: example_interfaces.srv.AddTwoInts_Request(a=1, b=2)
+./param_server -m client -a <address of ROS zenoh router>
 
-response:
-example_interfaces.srv.AddTwoInts_Response(sum=3)
-
+# fifth terminal on ROS host
+# listen to topic
+ros2 topic echo /picoros/chatter
+# call service
+ros2 service call /picoros/add2 example_interfaces/srv/AddTwoInts '{a: 1, b: 2}'
+# get params
+ros2 param list /picoros
 ```
 
 ## Picoserdes types
-User should provide their own list of types for creating serialization and deserialization functions.
-This type list header file name can be provided with `USER_TYPE_FILE` define when building the library.
-
-See examples/example_types.h for format description and a sample of some standard ROS types.
