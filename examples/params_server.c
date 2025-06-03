@@ -1,3 +1,12 @@
+/**
+  ******************************************************************************
+  * @file    params_server.c
+  * @date    2025-May-27
+  * @brief   Example parameters server node for picoparams
+  * Copyright (c) 2025 Ubiquity Robotics
+  ******************************************************************************
+  */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>

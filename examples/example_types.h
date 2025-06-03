@@ -2,7 +2,8 @@
   ******************************************************************************
   * @file    example_types.h
   * @date    2025-May-27
-  * @brief   Description
+  * @brief   Example message and service types for picoserdes
+  * Copyright (c) 2025 Ubiquity Robotics
   ******************************************************************************
   */
 #ifndef EXAMPLE_TYPES_H

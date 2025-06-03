@@ -1,3 +1,12 @@
+/**
+  ******************************************************************************
+  * @file    common.c
+  * @date    2025-May-27
+  * @brief   Common utilities for examples
+  * Copyright (c) 2025 Ubiquity Robotics
+  ******************************************************************************
+  */
+
 #include "picoros.h"
 #include <stdio.h>
 #include <unistd.h>
