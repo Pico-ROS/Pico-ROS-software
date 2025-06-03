@@ -72,6 +72,20 @@
     #include USER_TYPE_FILE
 #endif
 
+#define BASE_TYPES_LIST(TYPE)   \
+    TYPE(bool)                  \
+    TYPE(int8_t)                \
+    TYPE(uint8_t)               \
+    TYPE(int16_t)               \
+    TYPE(uint16_t)              \
+    TYPE(int32_t)               \
+    TYPE(uint32_t)              \
+    TYPE(int64_t)               \
+    TYPE(uint64_t)              \
+    TYPE(float)                 \
+    TYPE(double)                \
+    TYPE(rstring)               \
+
 /* Exported macro ------------------------------------------------------------*/
 #define PS_UNUSED(...)
 
@@ -143,6 +157,7 @@ SRV_LIST(TYPE_HASH, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
     bool ps_ser_##TYPE##_reply(ucdrBuffer* writer, reply_##TYPE* msg);
 MSG_LIST(PS_SER_FUNC_DEF, PS_SER_FUNC_DEF, PS_SER_FUNC_DEF, PS_UNUSED, PS_UNUSED)
 SRV_LIST(PS_SER_SRV_FUNC_DEF, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+BASE_TYPES_LIST(PS_SER_FUNC_DEF)
 #undef PS_SER_FUNC_DEF
 #undef PS_SER_SRV_FUNC_DEF
 
@@ -154,6 +169,7 @@ SRV_LIST(PS_SER_SRV_FUNC_DEF, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
     bool ps_des_##TYPE##_reply(ucdrBuffer* writer, reply_##TYPE* msg);
 MSG_LIST(PS_DES_FUNC_DEF, PS_DES_FUNC_DEF, PS_DES_FUNC_DEF, PS_UNUSED, PS_UNUSED)
 SRV_LIST(PS_DES_SRV_FUNC_DEF, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+BASE_TYPES_LIST(PS_DES_FUNC_DEF)
 #undef PS_DES_FUNC_DEF
 #undef PS_DES_SRV_FUNC_DEF
 
@@ -176,7 +192,8 @@ SRV_LIST(PS_DES_SRV_FUNC_DEF, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
         *((uint32_t*)pBUF) =  0x0100; /*Little endian header*/                          \
         ucdr_init_buffer(&writer, pBUF+4, MAX-4);                                       \
         _Generic((pMSG),                                                                \
-            MSG_LIST(PS_SEL_SER, PS_SEL_SER, PS_UNUSED, PS_UNUSED, PS_UNUSED)           \
+            BASE_TYPES_LIST(PS_SEL_SER)                                                 \
+            MSG_LIST(PS_UNUSED, PS_SEL_SER, PS_UNUSED, PS_UNUSED, PS_UNUSED)            \
             SRV_LIST(PS_SEL_SRV_SER, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)        \
             default: 0                                                                  \
         )(&writer, pMSG);                                                               \
@@ -189,7 +206,8 @@ SRV_LIST(PS_DES_SRV_FUNC_DEF, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
         ucdrBuffer reader = {};                                                         \
         ucdr_init_buffer(&reader, pBUF + sizeof(uint32_t), MAX - sizeof(uint32_t));     \
         bool _ok = _Generic((pMSG),                                                     \
-            MSG_LIST(PS_SEL_DES, PS_SEL_DES, PS_UNUSED, PS_UNUSED, PS_UNUSED)           \
+            BASE_TYPES_LIST(PS_SEL_DES)                                                 \
+            MSG_LIST(PS_UNUSED, PS_SEL_DES, PS_UNUSED, PS_UNUSED, PS_UNUSED)           \
             SRV_LIST(PS_SEL_SRV_DES, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)        \
             default: 0                                                                  \
         )(&reader, pMSG);                                                               \

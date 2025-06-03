@@ -8,6 +8,7 @@ file(READ ${CMAKE_CURRENT_SOURCE_DIR}/version.txt version)
 project(pico-ros VERSION ${version} LANGUAGES C)
 
 option(PICOROS_BUILD_EXAMPLES "Build examples" ON)
+option(PICOROS_BUILD_TESTS "Build tests" ON)
 message("PICOROS_BUILD_EXAMPLES: ${PICOROS_BUILD_EXAMPLES}")
 
 set(CMAKE_C_STANDARD 11)
@@ -61,8 +62,15 @@ target_link_libraries(picoros zenohpico::lib)
 target_link_libraries(picoserdes microcdr)
 target_link_libraries(picoparams zenohpico::lib microcdr picors picoserdes)
 
+# Add test executable
+if(PICOROS_BUILD_TESTS)
+  add_executable(test_picoserdes test/test_picoserdes.c)
+  target_include_directories(test_picoserdes PRIVATE src)
+  target_link_libraries(test_picoserdes PRIVATE picoserdes microcdr m)
+  add_test(NAME test_picoserdes COMMAND test_picoserdes)
+endif()
 
-##### EXAMPLES
+# Build examples if enabled
 if(PICOROS_BUILD_EXAMPLES)
   add_library(examples_serdes STATIC
     src/picoserdes.c

@@ -15,20 +15,6 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 // Base types for which we have external serialization functions
-#define BASE_TYPES_LIST(TYPE)   \
-    TYPE(bool)                  \
-    TYPE(int8_t)                \
-    TYPE(uint8_t)               \
-    TYPE(int16_t)               \
-    TYPE(uint16_t)              \
-    TYPE(int32_t)               \
-    TYPE(uint32_t)              \
-    TYPE(int64_t)               \
-    TYPE(uint64_t)              \
-    TYPE(float)                 \
-    TYPE(double)                \
-    TYPE(rstring)               \
-
 /* Private constants ---------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 
@@ -48,19 +34,19 @@ SRV_LIST(TYPE_HASH, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
 
 // Base types serialization / deserialization wrappers
 #define PS_SER_BASE(TYPE)                                                              \
-static inline bool ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg) {                      \
+bool ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg) {                      \
     return ucdr_serialize_##TYPE(writer, *msg);                                        \
 }
 #define PS_SER_BASE_SEQ(TYPE)                                                          \
-static inline bool ps_ser_seq_##TYPE(ucdrBuffer* writer, TYPE* msg, uint32_t number) { \
+bool ps_ser_seq_##TYPE(ucdrBuffer* writer, TYPE* msg, uint32_t number) { \
     return ucdr_serialize_array_##TYPE(writer, msg, number);                           \
 }
 #define PS_DES_BASE(TYPE)                                                              \
-static inline bool ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) {                      \
+bool ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) {                      \
     return ucdr_deserialize_##TYPE(reader, msg);                                       \
 }
 #define PS_DES_BASE_SEQ(TYPE)                                                          \
-static inline bool ps_des_seq_##TYPE(ucdrBuffer* reader, TYPE* msg, uint32_t max_number) {    \
+bool ps_des_seq_##TYPE(ucdrBuffer* reader, TYPE* msg, uint32_t max_number) {    \
     uint32_t len = 0;                                                                  \
     return ucdr_deserialize_sequence_##TYPE(reader, msg, max_number, &len);            \
 }
