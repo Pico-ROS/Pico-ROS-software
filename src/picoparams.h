@@ -3,6 +3,7 @@
   * @file    picoparams.h
   * @date    2025-Jun-01
   * @brief   Pico parameter server
+  * Copyright (c) 2025 Ubiquity Robotics
   ******************************************************************************
   */
 #ifndef PICOPARAMS_H_
