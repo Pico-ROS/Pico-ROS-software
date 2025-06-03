@@ -1,87 +1,108 @@
 # Pico-ROS
 
-## What is this?
-**Pico-ROS** is a small layer above [zenoh-pico](https://github.com/eclipse-zenoh/zenoh-pico) working with [rmw-zenoh](https://github.com/ros2/rmw_zenoh)
-designed to provide easy interaction with ROS.
+## Overview
+**Pico-ROS** is a lightweight ROS (Robot Operating System) client implementation designed for resource-constrained devices. Built on top of [zenoh-pico](https://github.com/eclipse-zenoh/zenoh-pico) and working in conjunction with [rmw-zenoh](https://github.com/ros2/rmw_zenoh), it provides an easy-to-use interface to ROS host from embedded systems.
 
-This repository provides the following modules:
+## Features
 
-### picoros
-Provides abstractions for ROS: 
+### Core Components
 
- - Node
- - Subscriber 
- - Publisher
- - Service server 
+1. **picoros**
+   - A lightweight ROS client implementation providing core abstractions:
+     - Node
+     - Publisher
+     - Subscriber
+     - Service server
 
-Works with zenoh-pico and depends on zenoh-rmw. Can be used independantly from other modules.
+2. **picoserdes**
+   - CDR serialization/deserialization for ROS messages
+   - Custom type generation from header files.
 
-### picoserdes 
-Poor man's type abstractions and CDR serialization/deserialization. 
+3. **picoparams**
+   - Parameter server implementation built using picoros and picoserdes
+   - Customizable parameter backend interface
+   - Compatible with ROS 2 parameter services
 
-Allows generation of serdes functions from user provided header files.
+## Getting Started
 
-User should provide their own list of types for creating serialization and deserialization functions.
-This type list header file name can be provided with `USER_TYPE_FILE` define when building the library.
+### Prerequisites
+- C compiler and CMake build system
+- [zenoh-pico](https://github.com/eclipse-zenoh/zenoh-pico)
+- [Micro-CDR](https://github.com/eProsima/Micro-CDR)
+- [rmw-zenoh](https://github.com/ros2/rmw_zenoh) (for ROS 2 integration)
 
-See examples/example_types.h for format description and a sample of some standard ROS types.
+### Building the Project
 
-### picoparams
-Parameter server implementation build with **picoros** and **picoserdes** with
-application interface allows connecting to custom paramters backend.
+   ```sh
+   git clone <repo>
+   cd <repo_path>
+   git submodule update --init --recursive
+   mkdir build
+   cd build
+   cmake ..
+   make
+   ```
 
-## Supported targets
-**Pico-ROS** is intended to be deployed on resource constrained embedded devices wherever zenoh-pico will run. 
-Eventhough it is easy to use on linux, it doesn't intend to compete with [rclc](https://github.com/ros2/rclc) or [rclcpp](https://github.com/ros2/rclcpp)
-which have more features.
+#### Build Options
+- Custom type definitions: `-DUSER_TYPE_FILE="user_types.h"`
+- Disable examples: `-DPICOROS_BUILD_EXAMPLES=OFF`
 
-## Dependancies
-### Build
- - **picoros**
-    - [zenoh-pico](https://github.com/eclipse-zenoh/zenoh-pico)
- - **picoserdes**
-    - [Micro-CDR](https://github.com/eProsima/Micro-CDR)
+### Examples
 
-#### Functional
- - [rmw-zenoh](https://github.com/ros2/rmw_zenoh). Needed for correct ROS interaction.
+The project includes several example applications demonstrating different features:
 
-## Building
+- **Basic Communication**
+  - `talker.c`: Basic publisher example
+  - `listener.c`: Basic subscriber example
 
-```sh
-git clone <repo>
-cd <repo_path>
-git submodule update --init --recursive
-mkdir build
-cd build
-cmake..
-#cmake.. -DUSER_TYPE_FILE="user_types.h" -DPICOROS_BUILD_EXAMPLES=OFF
-make
-```
+- **Advanced Features**
+  - `srv_add2ints.c`: Service server example
+  - `params_server.c`: Parameter server implementation
+  - `odometry_publisher.c` & `odometry_listener.c`: ROS odometry message handling
 
-## Running examples
-Run ROS with `zenoh_rmw`([installation instructions](https://github.com/ros2/rmw_zenoh?tab=readme-ov-file#installation))
+#### Running the Examples
 
-Inside `<repo>/build`:
+1. Ensure ROS 2 is running with `rmw_zenoh` ([Installation Guide](https://github.com/ros2/rmw_zenoh?tab=readme-ov-file#installation))
 
-```sh
-# first terminal - run talker node
-./talker -m client -a <address of ROS zenoh router>
+2. In separate terminals, run the example nodes:
 
-# second terminal - run listener node
-./listener -m client -a <address of ROS zenoh router>
+   ```sh
+   # Terminal 1: Run publisher
+   ./talker -m client -a <zenoh-router-address>
 
-# third terminal - run service server
-./srv_add2ints -m client -a <address of ROS zenoh router>
+   # Terminal 2: Run subscriber
+   ./listener -m client -a <zenoh-router-address>
 
-# fourth terminal - run parameters server
-./param_server -m client -a <address of ROS zenoh router>
+   # Terminal 3: Run service server
+   ./srv_add2ints -m client -a <zenoh-router-address>
 
-# fifth terminal on ROS host
-# listen to topic
-ros2 topic echo /picoros/chatter
-# call service
-ros2 service call /picoros/add2 example_interfaces/srv/AddTwoInts '{a: 1, b: 2}'
-# get params
-ros2 param list /picoros
-```
+   # Terminal 4: Run parameter server
+   ./param_server -m client -a <zenoh-router-address>
+   ```
+
+3. Interact with nodes from ROS 2:
+   ```sh
+   # Subscribe to messages
+   ros2 topic echo /picoros/chatter
+
+   # Call service
+   ros2 service call /picoros/add2 example_interfaces/srv/AddTwoInts '{a: 1, b: 2}'
+
+   # List parameters
+   ros2 param list /picoros
+   ```
+
+## Use Cases
+
+Pico-ROS is ideal for resource-constrained microcontroller-based ROS nodes and edge devices in ROS networks.
+
+While it provides core ROS functionality, it's not intended to replace full ROS implementations like [rclc](https://github.com/ros2/rclc) or [rclcpp](https://github.com/ros2/rclcpp) for systems with more resources.
+
+## Using in your project
+
+See the examples directory for implementation references. When adding new types, use the `example_types.h` as a template for the required format.
+
+## License
+
+See [LICENSE](LICENSE) file for details.
 
