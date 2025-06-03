@@ -3,6 +3,7 @@
   * @file    picoserdes.h
   * @date    2025-May-31
   * @brief   Pico CDR serdes
+  * Copyright (c) 2025 Ubiquity Robotics
   ******************************************************************************
   */
 #ifndef PICOSERDES_H
