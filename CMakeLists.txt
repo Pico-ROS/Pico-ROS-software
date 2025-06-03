@@ -66,7 +66,7 @@ target_link_libraries(picoparams zenohpico::lib microcdr picors picoserdes)
 if(PICOROS_BUILD_TESTS)
   add_executable(test_picoserdes test/test_picoserdes.c)
   target_include_directories(test_picoserdes PRIVATE src)
-  target_link_libraries(test_picoserdes PRIVATE picoserdes microcdr m)
+  target_link_libraries(test_picoserdes PRIVATE picoserdes microcdr)
   add_test(NAME test_picoserdes COMMAND test_picoserdes)
 endif()
 

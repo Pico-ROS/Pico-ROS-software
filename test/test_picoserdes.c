@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include <math.h>
 #include "../src/picoserdes.h"
 
 // Buffer size for serialization tests
@@ -43,7 +42,7 @@ void test_bool() {
     ps_serialize(buffer, &original, TEST_BUFFER_SIZE);
     
     // Reset buffer for deserialization
-    ucdr_init_buffer(&ub, buffer + 4, TEST_BUFFER_SIZE - 4);
+    ucdr_init_buffer(&ub, buffer, TEST_BUFFER_SIZE);
     
     // Deserialize
     ps_deserialize(buffer, &deserialized, TEST_BUFFER_SIZE);
@@ -67,7 +66,7 @@ void test_int8() {
     ps_serialize(buffer, &original, TEST_BUFFER_SIZE);
     
     // Reset buffer for deserialization
-    ucdr_init_buffer(&ub, buffer + 4, TEST_BUFFER_SIZE - 4);
+    ucdr_init_buffer(&ub, buffer, TEST_BUFFER_SIZE);
     
     // Deserialize
     ps_deserialize(buffer, &deserialized, TEST_BUFFER_SIZE);
@@ -91,7 +90,7 @@ void test_uint8() {
     ps_serialize(buffer, &original, TEST_BUFFER_SIZE);
     
     // Reset buffer for deserialization
-    ucdr_init_buffer(&ub, buffer + 4, TEST_BUFFER_SIZE - 4);
+    ucdr_init_buffer(&ub, buffer, TEST_BUFFER_SIZE);
     
     // Deserialize
     ps_deserialize(buffer, &deserialized, TEST_BUFFER_SIZE);
@@ -115,7 +114,7 @@ void test_int16() {
     ps_serialize(buffer, &original, TEST_BUFFER_SIZE);
     
     // Reset buffer for deserialization
-    ucdr_init_buffer(&ub, buffer + 4, TEST_BUFFER_SIZE - 4);
+    ucdr_init_buffer(&ub, buffer, TEST_BUFFER_SIZE);
     
     // Deserialize
     ps_deserialize(buffer, &deserialized, TEST_BUFFER_SIZE);
@@ -139,7 +138,7 @@ void test_uint16() {
     ps_serialize(buffer, &original, TEST_BUFFER_SIZE);
     
     // Reset buffer for deserialization
-    ucdr_init_buffer(&ub, buffer + 4, TEST_BUFFER_SIZE - 4);
+    ucdr_init_buffer(&ub, buffer, TEST_BUFFER_SIZE);
     
     // Deserialize
     ps_deserialize(buffer, &deserialized, TEST_BUFFER_SIZE);
@@ -163,7 +162,7 @@ void test_int32() {
     ps_serialize(buffer, &original, TEST_BUFFER_SIZE);
     
     // Reset buffer for deserialization
-    ucdr_init_buffer(&ub, buffer + 4, TEST_BUFFER_SIZE - 4);
+    ucdr_init_buffer(&ub, buffer, TEST_BUFFER_SIZE);
     
     // Deserialize
     ps_deserialize(buffer, &deserialized, TEST_BUFFER_SIZE);
@@ -187,7 +186,7 @@ void test_uint32() {
     ps_serialize(buffer, &original, TEST_BUFFER_SIZE);
     
     // Reset buffer for deserialization
-    ucdr_init_buffer(&ub, buffer + 4, TEST_BUFFER_SIZE - 4);
+    ucdr_init_buffer(&ub, buffer, TEST_BUFFER_SIZE);
     
     // Deserialize
     ps_deserialize(buffer, &deserialized, TEST_BUFFER_SIZE);
@@ -211,7 +210,7 @@ void test_int64() {
     ps_serialize(buffer, &original, TEST_BUFFER_SIZE);
     
     // Reset buffer for deserialization
-    ucdr_init_buffer(&ub, buffer + 4, TEST_BUFFER_SIZE - 4);
+    ucdr_init_buffer(&ub, buffer, TEST_BUFFER_SIZE);
     
     // Deserialize
     ps_deserialize(buffer, &deserialized, TEST_BUFFER_SIZE);
@@ -235,7 +234,7 @@ void test_uint64() {
     ps_serialize(buffer, &original, TEST_BUFFER_SIZE);
     
     // Reset buffer for deserialization
-    ucdr_init_buffer(&ub, buffer + 4, TEST_BUFFER_SIZE - 4);
+    ucdr_init_buffer(&ub, buffer, TEST_BUFFER_SIZE);
     
     // Deserialize
     ps_deserialize(buffer, &deserialized, TEST_BUFFER_SIZE);
@@ -259,14 +258,14 @@ void test_float() {
     ps_serialize(buffer, &original, TEST_BUFFER_SIZE);
     
     // Reset buffer for deserialization
-    ucdr_init_buffer(&ub, buffer + 4, TEST_BUFFER_SIZE - 4);
+    ucdr_init_buffer(&ub, buffer, TEST_BUFFER_SIZE);
     
     // Deserialize
     ps_deserialize(buffer, &deserialized, TEST_BUFFER_SIZE);
     
     // Compare with small epsilon for floating point comparison
     float epsilon = 0.000001f;
-    assert(fabsf(original - deserialized) < epsilon);
+    assert(original == deserialized);
     printf("float test passed\n");
 }
 
@@ -284,7 +283,7 @@ void test_double() {
     ps_serialize(buffer, &original, TEST_BUFFER_SIZE);
     
     // Reset buffer for deserialization
-    ucdr_init_buffer(&ub, buffer + 4, TEST_BUFFER_SIZE - 4);
+    ucdr_init_buffer(&ub, buffer, TEST_BUFFER_SIZE);
     
     // Deserialize
     ps_deserialize(buffer, &deserialized, TEST_BUFFER_SIZE);
@@ -309,7 +308,7 @@ void test_string() {
     ps_serialize(buffer, &original, TEST_BUFFER_SIZE);
     
     // Reset buffer for deserialization
-    ucdr_init_buffer(&ub, buffer + 4, TEST_BUFFER_SIZE - 4);
+    ucdr_init_buffer(&ub, buffer, TEST_BUFFER_SIZE);
     
     // Deserialize
     ps_deserialize(buffer, &deserialized, TEST_BUFFER_SIZE);
