@@ -3,6 +3,7 @@
   * @file    picoros.c
   * @date    2025-May-27
   * @brief   Pico-ROS
+  * Copyright (c) 2025 Ubiquity Robotics
   ******************************************************************************
   */
 
