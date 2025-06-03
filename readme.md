@@ -94,34 +94,20 @@ The project includes several example applications demonstrating different featur
 
 ## Documentation
 
-The project uses Doxygen for API documentation. To generate the documentation:
+The project uses Doxygen for documentation. To generate and read:
 
-1. Install dependencies:
    ```sh
-   # For Ubuntu/Debian
+   # Install dependencies:
    sudo apt-get install doxygen graphviz
 
-   # For Arch Linux
-   sudo pacman -S doxygen graphviz
-   ```
-
-2. Generate documentation:
-   ```sh
+   # Generate documentation:
    cd docs
    ./generate.sh
-   ```
 
-3. View documentation:
-   ```sh
+   # View documentation:
    # Open in your default browser
    xdg-open docs/generated/html/index.html
    ```
-
-The documentation includes:
-- API reference for all components
-- Code examples and usage
-- Architecture overview
-- Implementation details
 
 ## Use Cases
 
