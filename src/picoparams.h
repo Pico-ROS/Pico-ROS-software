@@ -1,11 +1,13 @@
-/**
-  ******************************************************************************
-  * @file    picoparams.h
-  * @date    2025-Jun-01
-  * @brief   Pico parameter server
-  * Copyright (c) 2025 Ubiquity Robotics
-  ******************************************************************************
-  */
+/*******************************************************************************
+ * @file    picoparams.h
+ * @brief   Pico-ROS Parameter Server Implementation
+ * @date    2025-Jun-01
+ * 
+ * @details This module implements a ROS 2 compatible parameter server for embedded systems.
+ * 
+ * @copyright Copyright (c) 2025 Ubiquity Robotics
+ *******************************************************************************/
+
 #ifndef PICOPARAMS_H_
 #define PICOPARAMS_H_
 
@@ -13,129 +15,221 @@
  extern "C" {
 #endif
 
+
+ /**
+ * @defgroup picoparams picoparams
+ * @{
+ */
+/** @} */
+
 /* Exported includes ---------------------------------------------------------*/
 #include "picoros.h"
 #include "picoserdes.h"
+
 /* Exported types ------------------------------------------------------------*/
+/** @brief Maximum number of strings in a parameter request @ingroup picoparams */
 #define MAX_REQUEST_STRINGS 50
-typedef enum{
-    PARAMETER_NOT_SET,
-    PARAMETER_BOOL,
-    PARAMETER_INTEGER,
-    PARAMETER_DOUBLE,
-    PARAMETER_STRING,
-    PARAMETER_BYTE_ARRAY,
-    PARAMETER_BOOL_ARRAY,
-    PARAMETER_INTEGER_ARRAY,
-    PARAMETER_DOUBLE_ARRAY,
-    PARAMETER_STRING_ARRAY,
-}ros_ParameterType;
 
-typedef struct{
-    double min;
-    double max;
-    double step;
-}ros_FloatingPointRange;
 
-typedef struct{
-    int64_t min;
-    int64_t max;
-    int64_t step;
-}ros_IntegerRange;
+ /**
+ * @defgroup ros_parameter ROS Parameter types
+ * @ingroup picoparams
+ * @{
+ */
 
-typedef struct{
-    uint8_t  type;           // ros_ParameterType
-    union{
-        bool        val_bool;
-        int64_t     val_int;
-        double      val_double;
-        char*       val_string;
-        uint8_t*    val_bytearray;
-        bool*       val_boolarray;
-        int64_t*    val_intarray;
-        double*     val_doublearray;
+/**
+ * @brief ROS parameter types
+ */
+typedef enum {
+    PARAMETER_NOT_SET,        /**< Parameter not set */
+    PARAMETER_BOOL,           /**< Boolean parameter */
+    PARAMETER_INTEGER,        /**< Integer parameter */
+    PARAMETER_DOUBLE,         /**< Double parameter */
+    PARAMETER_STRING,         /**< String parameter */
+    PARAMETER_BYTE_ARRAY,     /**< Byte array parameter */
+    PARAMETER_BOOL_ARRAY,     /**< Boolean array parameter */
+    PARAMETER_INTEGER_ARRAY,  /**< Integer array parameter */
+    PARAMETER_DOUBLE_ARRAY,   /**< Double array parameter */
+    PARAMETER_STRING_ARRAY,   /**< String array parameter */
+} ros_ParameterType;
+
+/**
+ * @brief Floating point range descriptor for parameters
+ */
+typedef struct {
+    double min;   /**< Minimum allowed value */
+    double max;   /**< Maximum allowed value */
+    double step;  /**< Step size for value changes */
+} ros_FloatingPointRange;
+
+/**
+ * @brief Integer range descriptor for parameters
+ */
+typedef struct {
+    int64_t min;   /**< Minimum allowed value */
+    int64_t max;   /**< Maximum allowed value */
+    int64_t step;  /**< Step size for value changes */
+} ros_IntegerRange;
+
+/**
+ * @brief Parameter value container
+ */
+typedef struct {
+    uint8_t type;           /**< Parameter type (ros_ParameterType) */
+    union {
+        bool        val_bool;        /**< Boolean value */
+        int64_t     val_int;         /**< Integer value */
+        double      val_double;      /**< Double value */
+        char*       val_string;      /**< String value */
+        uint8_t*    val_bytearray;   /**< Byte array value */
+        bool*       val_boolarray;   /**< Boolean array value */
+        int64_t*    val_intarray;    /**< Integer array value */
+        double*     val_doublearray; /**< Double array value */
     };
-    uint32_t length;  // length of data > 1 for array
+    uint32_t length;  /**< Length of data (>1 for arrays) */
 
-    // User function called to serialize [n] part of data to buffer.
-    // If left unset data from value union is used for serialization.
-    void     (*write_data_n)(ucdrBuffer* writer, void* user_data, uint32_t n);
-    void*    user_data;
+    /**
+     * @brief User function to serialize [n] part of data to buffer
+     * @note If not set, data from value union is used for serialization
+     */
+    void (*write_data_n)(ucdrBuffer* writer, void* user_data, uint32_t n);
+    void* user_data;  /**< User data for write_data_n callback */
+} ros_ParameterValue;
 
-}ros_ParameterValue;
+/**
+ * @brief ROS parameter with name and value
+ */
+typedef struct {
+    char* name;              /**< Parameter name */
+    ros_ParameterValue value; /**< Parameter value */
+} ros_Parameter;
 
-typedef struct{
-    char*                  name;
-    ros_ParameterValue     value;
-}ros_Parameter;
-
-typedef struct{
-    char*             name;
-    ros_ParameterType type:8;
-    char*             description;
-    char*             additional_constraints;
-    bool              read_only;
-    bool              dynamic_typing;
-    union{
-        ros_FloatingPointRange  float_range;
-        ros_IntegerRange        int_range;
+/**
+ * @brief Parameter descriptor containing metadata
+ */
+typedef struct {
+    char* name;                    /**< Parameter name */
+    ros_ParameterType type:8;      /**< Parameter type */
+    char* description;             /**< Parameter description */
+    char* additional_constraints;   /**< Additional constraints as string */
+    bool read_only;                /**< Whether parameter is read-only */
+    bool dynamic_typing;           /**< Whether parameter type can change */
+    union {
+        ros_FloatingPointRange float_range; /**< Floating point range constraints */
+        ros_IntegerRange int_range;         /**< Integer range constraints */
     };
-}ros_ParameterDescriptor;
+} ros_ParameterDescriptor;
 
-/* Function to return parameter reference from full path. */
+/** @} */
+
+
+ /**
+ * @defgroup picoparams_interface Parameter server interface
+ * @ingroup picoparams_server
+ * @{
+ */
+
+/**
+ * @brief Function to get parameter reference from full path
+ * @param name Full parameter path
+ * @return Opaque parameter reference
+ */
 typedef void* (*f_param_ref)(char* name);
 
-/* Function to return ros_ParameterDescriptor from parameter reference. */
+/**
+ * @brief Function to get parameter descriptor
+ * @param param Parameter reference
+ * @return Parameter descriptor
+ */
 typedef ros_ParameterDescriptor (*f_param_describe)(void* param);
 
-/* Function to return ros_ParameterValue from parameter reference. */
+/**
+ * @brief Function to get parameter value
+ * @param param Parameter reference
+ * @return Parameter value
+ */
 typedef ros_ParameterValue (*f_param_get)(void* param);
 
-/* Function to return ros_ParameterType from parameter reference. */
+/**
+ * @brief Function to get parameter type
+ * @param param Parameter reference
+ * @return Parameter type
+ */
 typedef ros_ParameterType (*f_param_type)(void* param);
 
-/* Function to set ros_ParameterValue to parmeter reference.
- * return true if set if successful, false if failed.
- * If false is returned error message can be set.
+/**
+ * @brief Function to set parameter value
+ * @param param Parameter reference
+ * @param value New parameter value
+ * @param error_msg Error message if set fails
+ * @return true if set successful, false otherwise
  */
 typedef bool (*f_param_set)(void* param, ros_ParameterValue* value, char** error_msg);
 
-/* Function to list all parameters at provided prefix.
- * write_next should be called with each new parameter full path.
- * Return total number of parameters written.
+/**
+ * @brief Function to list parameters at a prefix
+ * @param prefix Parameter prefix to list
+ * @param write_next Callback for each parameter found
+ * @return Number of parameters found
  */
-typedef int (*f_param_list)(char* prefix,  void (*write_next)(char* param_name) );
+typedef int (*f_param_list)(char* prefix, void (*write_next)(char* param_name));
 
-/* Function to list all prefixes at provided prefix.
- * write_next should be called with each new prefix.
- * Return total number of orefixes written.
+/**
+ * @brief Function to list parameter prefixes
+ * @param prefix Prefix to list
+ * @param write_next Callback for each prefix found
+ * @return Number of prefixes found
  */
-typedef int (*f_prefix_list)(char* prefix,  void (*write_next)(char* prefix_name) );
+typedef int (*f_prefix_list)(char* prefix, void (*write_next)(char* prefix_name));
 
-typedef struct{
-    f_param_ref            f_ref;
-    f_param_describe       f_describe;
-    f_param_get            f_get;
-    f_param_type           f_type;
-    f_param_set            f_set;
-    f_param_list           f_list;
-    f_prefix_list          f_prefixes;
-    uint8_t*               reply_buf;
-    uint32_t               reply_buf_size;
-}picoparams_interface_t;
+/**
+ * @brief Parameter server interface
+ */
+typedef struct {
+    f_param_ref f_ref;              /**< Get parameter reference */
+    f_param_describe f_describe;    /**< Get parameter descriptor */
+    f_param_get f_get;              /**< Get parameter value */
+    f_param_type f_type;            /**< Get parameter type */
+    f_param_set f_set;              /**< Set parameter value */
+    f_param_list f_list;            /**< List parameters */
+    f_prefix_list f_prefixes;       /**< List parameter prefixes */
+    uint8_t* reply_buf;             /**< Reply buffer */
+    uint32_t reply_buf_size;        /**< Reply buffer size */
+} picoparams_interface_t;
 
-typedef struct{
-    picoparams_interface_t interface;
-    picoros_service_t      get_srv;
-    picoros_service_t      list_srv;
-    picoros_service_t      set_srv;
-    picoros_service_t      describe_srv;
-    picoros_service_t      get_types_srv;
-    picoros_service_t      set_atomic_srv;
-    ucdr_writer_t*         current_writer;
-}picoparams_server_t;
+/** @} */
 
+
+ /**
+ * @defgroup picoparams_server Parameter server
+ * @ingroup picoparams
+ * @{
+ */
+
+/**
+ * @brief Parameter server instance
+ */
+typedef struct {
+    picoparams_interface_t interface;    /**< Parameter interface */
+    picoros_service_t get_srv;           /**< Get parameter service */
+    picoros_service_t list_srv;          /**< List parameters service */
+    picoros_service_t set_srv;           /**< Set parameter service */
+    picoros_service_t describe_srv;      /**< Describe parameter service */
+    picoros_service_t get_types_srv;     /**< Get parameter types service */
+    picoros_service_t set_atomic_srv;    /**< Set atomic parameter service */
+    ucdr_writer_t* current_writer;       /**< Current writer context */
+} picoparams_server_t;
+
+/**
+ * @brief Initialize parameter server
+ * @param server Parameter server instance
+ * @param node ROS node
+ * @param ifx Parameter interface
+ * @return PICOROS_OK on success, error code otherwise
+ */
 picoros_res_t picoparams_init(picoparams_server_t* server, picoros_node_t* node, picoparams_interface_t ifx);
+
+/** @} */
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/

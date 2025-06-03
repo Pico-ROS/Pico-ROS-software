@@ -1,11 +1,14 @@
-/**
-  ******************************************************************************
-  * @file    picoserdes.c
-  * @date    2025-May-31
-  * @brief   Pico CDR serdes
-  * Copyright (c) 2025 Ubiquity Robotics
-  ******************************************************************************
-  */
+/*******************************************************************************
+ * @file    picoserdes.c
+ * @brief   Pico CDR serdes implementation
+ * @date    2025-May-31
+ * 
+ * @details This file implements the CDR serialization and deserialization functions
+ *          for ROS messages, providing the core functionality for message encoding
+ *          and decoding.
+ * 
+ * @copyright Copyright (c) 2025 Ubiquity Robotics
+ *******************************************************************************/
 
 /* Private includes ----------------------------------------------------------*/
 #include "picoserdes.h"

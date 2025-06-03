@@ -1,0 +1,104 @@
+# Project settings
+PROJECT_NAME           = "Pico-ROS"
+PROJECT_NUMBER         = $(shell cat ../version.txt)
+PROJECT_BRIEF         = "A lightweight ROS client implementation for resource-constrained devices"
+OUTPUT_DIRECTORY      = generated
+CREATE_SUBDIRS        = YES
+OPTIMIZE_OUTPUT_FOR_C = YES
+
+# Input files
+INPUT                 = ../src ../examples ../README.md
+FILE_PATTERNS         = *.c *.h *.md
+RECURSIVE             = YES
+USE_MDFILE_AS_MAINPAGE = ../README.md
+
+# Output settings
+GENERATE_HTML         = YES
+GENERATE_LATEX        = NO
+HTML_OUTPUT          = html
+HTML_THEME           = "doxygen-awesome"
+
+# Preprocessing
+ENABLE_PREPROCESSING  = YES
+MACRO_EXPANSION      = YES
+EXPAND_ONLY_PREDEF   = NO
+PREDEFINED           = 
+
+# Extraction settings
+EXTRACT_ALL          = YES
+EXTRACT_PRIVATE      = NO
+EXTRACT_PACKAGE      = YES
+EXTRACT_STATIC       = YES
+CASE_SENSE_NAMES     = YES
+
+# Graphs and diagrams
+HAVE_DOT             = YES
+CLASS_DIAGRAMS       = YES
+COLLABORATION_GRAPH  = YES
+UML_LOOK            = YES
+DOT_IMAGE_FORMAT    = svg
+
+# Source browsing
+SOURCE_BROWSER       = YES
+INLINE_SOURCES      = NO
+STRIP_CODE_COMMENTS = NO
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION  = YES
+
+# Other settings
+GENERATE_TREEVIEW    = YES
+SEARCHENGINE         = YES
+GENERATE_TODOLIST    = YES
+
+# Advanced settings
+ALIASES              += "rst=\verbatim embed:rst"
+ALIASES              += "endrst=\endverbatim"
+ALIASES              += "cond{1}=\if \1"
+ALIASES              += "endcond=\endif"
+
+# Warning settings
+QUIET                = NO
+WARNINGS             = YES
+WARN_IF_UNDOCUMENTED = YES
+WARN_IF_DOC_ERROR    = YES
+WARN_NO_PARAMDOC     = YES
+
+# Input filter settings
+FILTER_SOURCE_FILES  = NO
+SOURCE_BROWSER       = YES
+STRIP_CODE_COMMENTS  = NO
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION  = YES
+REFERENCES_LINK_SOURCE = YES
+USE_HTAGS           = NO
+VERBATIM_HEADERS    = YES
+
+# External references
+TAGFILES             =
+GENERATE_TAGFILE     = 
+ALLEXTERNALS        = NO
+EXTERNAL_GROUPS     = YES
+EXTERNAL_PAGES      = YES
+
+# Language settings
+OUTPUT_LANGUAGE      = English
+BRIEF_MEMBER_DESC    = YES
+REPEAT_BRIEF        = YES
+ABBREVIATE_BRIEF    = "The $name class" \
+                     "The $name widget" \
+                     "The $name file" \
+                     is \
+                     provides \
+                     specifies \
+                     contains \
+                     represents \
+                     a \
+                     an \
+                     the
+
+# Message settings
+QUIET               = NO
+WARNINGS            = YES
+WARN_IF_UNDOCUMENTED = YES
+WARN_IF_DOC_ERROR   = YES
+WARN_NO_PARAMDOC    = NO 

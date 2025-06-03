@@ -1,11 +1,13 @@
-/**
-  ******************************************************************************
-  * @file    odometry_listener.c
-  * @date    2025-May-27
-  * @brief   Example odometry listener node for picoros
-  * Copyright (c) 2025 Ubiquity Robotics
-  ******************************************************************************
-  */
+/*******************************************************************************
+ * @file    odometry_listener.c
+ * @brief   Example odometry subscriber node for picoros
+ * @date    2025-May-27
+ * 
+ * @details This example demonstrates a ROS subscriber node that listens to
+ *          odometry messages on the "odom" topic and prints the pose data.
+ * 
+ * @copyright Copyright (c) 2025 Ubiquity Robotics
+ *******************************************************************************/
 
 #include <stdio.h>
 #include <stdint.h>

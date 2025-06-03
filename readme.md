@@ -92,6 +92,37 @@ The project includes several example applications demonstrating different featur
    ros2 param list /picoros
    ```
 
+## Documentation
+
+The project uses Doxygen for API documentation. To generate the documentation:
+
+1. Install dependencies:
+   ```sh
+   # For Ubuntu/Debian
+   sudo apt-get install doxygen graphviz
+
+   # For Arch Linux
+   sudo pacman -S doxygen graphviz
+   ```
+
+2. Generate documentation:
+   ```sh
+   cd docs
+   ./generate.sh
+   ```
+
+3. View documentation:
+   ```sh
+   # Open in your default browser
+   xdg-open docs/generated/html/index.html
+   ```
+
+The documentation includes:
+- API reference for all components
+- Code examples and usage
+- Architecture overview
+- Implementation details
+
 ## Use Cases
 
 Pico-ROS is ideal for resource-constrained microcontroller-based ROS nodes and edge devices in ROS networks.

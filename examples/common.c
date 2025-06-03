@@ -1,11 +1,13 @@
-/**
-  ******************************************************************************
-  * @file    common.c
-  * @date    2025-May-27
-  * @brief   Common utilities for examples
-  * Copyright (c) 2025 Ubiquity Robotics
-  ******************************************************************************
-  */
+/*******************************************************************************
+ * @file    common.c
+ * @brief   Common utilities for picoros examples
+ * @date    2025-May-27
+ * 
+ * @details This file provides common utility functions used across
+ *          the example programs,
+ * 
+ * @copyright Copyright (c) 2025 Ubiquity Robotics
+ *******************************************************************************/
 
 #include "picoros.h"
 #include <stdio.h>

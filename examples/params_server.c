@@ -1,11 +1,13 @@
-/**
-  ******************************************************************************
-  * @file    params_server.c
-  * @date    2025-May-27
-  * @brief   Example parameters server node for picoparams
-  * Copyright (c) 2025 Ubiquity Robotics
-  ******************************************************************************
-  */
+/*******************************************************************************
+ * @file    params_server.c
+ * @brief   Example parameter server node for picoros
+ * @date    2025-May-27
+ * 
+ * @details This example demonstrates a ROS parameter server implementation
+ *          that handles needed requests to support configuration with rqt_reconfigure.
+ * 
+ * @copyright Copyright (c) 2025 Ubiquity Robotics
+ *******************************************************************************/
 
 #include <stdio.h>
 #include <stdint.h>

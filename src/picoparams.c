@@ -1,11 +1,14 @@
-/**
-  ******************************************************************************
-  * @file    picoparams.c
-  * @date    2025-Jun-01
-  * @brief   Pico parameter server
-  * Copyright (c) 2025 Ubiquity Robotics
-  ******************************************************************************
-  */
+/*******************************************************************************
+ * @file    picoparams.c
+ * @brief   Pico-ROS Parameter Server Implementation
+ * @date    2025-Jun-01
+ * 
+ * @details This file implements the ROS 2 parameter server functionality,
+ *          providing parameter storage, retrieval, and manipulation capabilities
+ *          for embedded systems.
+ * 
+ * @copyright Copyright (c) 2025 Ubiquity Robotics
+ *******************************************************************************/
 
 /* Private includes ----------------------------------------------------------*/
 #include "picoparams.h"

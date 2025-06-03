@@ -1,11 +1,13 @@
-/**
-  ******************************************************************************
-  * @file    srv_add2ints.c
-  * @date    2025-May-27
-  * @brief   Example service node for picoros
-  * Copyright (c) 2025 Ubiquity Robotics
-  ******************************************************************************
-  */
+/*******************************************************************************
+ * @file    srv_add2ints.c
+ * @brief   Example service server node for picoros
+ * @date    2025-May-27
+ * 
+ * @details This example demonstrates a ROS service server implementation that
+ *          provides an "add two integers" service functionality.
+ * 
+ * @copyright Copyright (c) 2025 Ubiquity Robotics
+ *******************************************************************************/
   
 #include <stdio.h>
 #include <stdint.h>

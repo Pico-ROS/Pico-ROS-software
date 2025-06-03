@@ -1,11 +1,14 @@
-/**
-  ******************************************************************************
-  * @file    picoros.c
-  * @date    2025-May-27
-  * @brief   Pico-ROS
-  * Copyright (c) 2025 Ubiquity Robotics
-  ******************************************************************************
-  */
+/*******************************************************************************
+ * @file    picoros.c
+ * @brief   Pico-ROS Core Implementation
+ * @date    2025-May-27
+ * 
+ * @details This file implements the core functionality of Pico-ROS, including
+ *          node management, publisher/subscriber communication, and service
+ *          server implementation.
+ * 
+ * @copyright Copyright (c) 2025 Ubiquity Robotics
+ *******************************************************************************/
 
 /* Private includes ----------------------------------------------------------*/
 #include <string.h>

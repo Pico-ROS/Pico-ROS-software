@@ -1,11 +1,13 @@
-/**
-  ******************************************************************************
-  * @file    talker.c
-  * @date    2025-May-27
-  * @brief   Example talker node for picoros
-  * Copyright (c) 2025 Ubiquity Robotics
-  ******************************************************************************
-  */
+/*******************************************************************************
+ * @file    talker.c
+ * @brief   Example talker node for picoros
+ * @date    2025-May-27
+ * 
+ * @details This example demonstrates a simple ROS publisher node that
+ *          publishes string messages on the "picoros/chatter" topic.
+ * 
+ * @copyright Copyright (c) 2025 Ubiquity Robotics
+ *******************************************************************************/
 
 #include <stdio.h>
 #include <stdint.h>

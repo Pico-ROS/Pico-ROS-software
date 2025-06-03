@@ -1,11 +1,13 @@
-/**
-  ******************************************************************************
-  * @file    listener.c
-  * @date    2025-May-27
-  * @brief   Example listener node for picoros
-  * Copyright (c) 2025 Ubiquity Robotics
-  ******************************************************************************
-  */
+/*******************************************************************************
+ * @file    listener.c
+ * @brief   Example listener node for picoros
+ * @date    2025-May-27
+ * 
+ * @details This example demonstrates a simple ROS subscriber node that
+ *          listens to string messages on the "picoros/chatter" topic.
+ * 
+ * @copyright Copyright (c) 2025 Ubiquity Robotics
+ *******************************************************************************/
 
 #include <stdio.h>
 #include <stdint.h>

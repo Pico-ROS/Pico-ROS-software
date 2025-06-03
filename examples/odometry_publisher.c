@@ -1,12 +1,13 @@
-
-/**
-  ******************************************************************************
-  * @file    odometry_publisher.c
-  * @date    2025-May-27
-  * @brief   Example odometry publisher node for picoros
-  * Copyright (c) 2025 Ubiquity Robotics
-  ******************************************************************************
-  */
+/*******************************************************************************
+ * @file    odometry_publisher.c
+ * @brief   Example odometry publisher node for picoros
+ * @date    2025-May-27
+ * 
+ * @details This example demonstrates a ROS publisher node that publishes
+ *          simulated odometry messages on the "odom" topic.
+ * 
+ * @copyright Copyright (c) 2025 Ubiquity Robotics
+ *******************************************************************************/
   
 #include <stdio.h>
 #include <stdint.h>

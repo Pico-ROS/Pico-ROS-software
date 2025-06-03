@@ -1,11 +1,13 @@
-/**
-  ******************************************************************************
-  * @file    example_types.h
-  * @date    2025-May-27
-  * @brief   Example message and service types for picoserdes
-  * Copyright (c) 2025 Ubiquity Robotics
-  ******************************************************************************
-  */
+/*******************************************************************************
+ * @file    example_types.h
+ * @brief   Example ROS message type definitions for picoros
+ * @date    2025-May-27
+ * 
+ * @details This header file provides some standard ROS message and service type definitions.
+ *          It is used in the examples to demonstrate the usage of the picoros library.
+ * 
+ * @copyright Copyright (c) 2025 Ubiquity Robotics
+ *******************************************************************************/
 #ifndef EXAMPLE_TYPES_H
 #define EXAMPLE_TYPES_H
 
