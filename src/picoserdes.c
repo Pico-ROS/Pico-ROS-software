@@ -61,7 +61,7 @@ BASE_TYPES_LIST(PS_DES_BASE_SEQ)
 /* Public functions ----------------------------------------------------------*/
 /* ----- ucdr helper functions -----------------------------------------------*/
 // Deserialize string without copy
-bool ucdr_deserialize_rstring(ucdrBuffer* ub, char** pstring){
+__attribute__((weak)) bool ucdr_deserialize_rstring(ucdrBuffer* ub, char** pstring){
     uint32_t len = 0;
     bool ret = ucdr_deserialize_endian_uint32_t(ub, ub->endianness, &len);
     if (ret){
@@ -73,7 +73,7 @@ bool ucdr_deserialize_rstring(ucdrBuffer* ub, char** pstring){
     return ret;
 }
 // Wrapper for having consistent names
-bool ucdr_serialize_rstring(ucdrBuffer* writer, char* pstring){
+__attribute__((weak)) bool ucdr_serialize_rstring(ucdrBuffer* writer, char* pstring){
     if (pstring == NULL){
         return ucdr_serialize_uint32_t(writer, 0);
     }

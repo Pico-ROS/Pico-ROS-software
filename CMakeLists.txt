@@ -63,11 +63,12 @@ target_link_libraries(picoserdes microcdr)
 target_link_libraries(picoparams zenohpico::lib microcdr picors picoserdes)
 
 # Add test executable
-if(PICOROS_BUILD_TESTS)
-  add_executable(test_picoserdes test/test_picoserdes.c)
-  target_include_directories(test_picoserdes PRIVATE src)
-  target_link_libraries(test_picoserdes PRIVATE picoserdes microcdr)
-  add_test(NAME test_picoserdes COMMAND test_picoserdes)
+if(PICOROS_BUILD_TESTS AND TYPE_FILE)
+  message("User types serdes tests enabled")
+  add_executable(test_user_types_serdes test/test_picoserdes.c)
+  target_include_directories(test_user_types_serdes PRIVATE src)
+  target_link_libraries(test_user_types_serdes PRIVATE picoserdes microcdr)
+  add_test(NAME test_user_types_serdes COMMAND test_user_types)
 endif()
 
 # Build examples if enabled
@@ -79,6 +80,14 @@ if(PICOROS_BUILD_EXAMPLES)
   target_include_directories(examples_serdes PUBLIC examples)
   target_compile_definitions(examples_serdes PUBLIC -DUSER_TYPE_FILE="example_types.h")
   target_link_libraries(examples_serdes microcdr)
+  
+  # Add test executable
+  if(PICOROS_BUILD_TESTS)
+    add_executable(test_examples_types_serdes test/test_picoserdes.c)
+    target_include_directories(test_examples_types_serdes PRIVATE src)
+    target_link_libraries(test_examples_types_serdes PRIVATE examples_serdes microcdr)
+    add_test(NAME test_examples_types_serdes COMMAND test_examples_types)
+  endif()
 
   set(EXAMPLE_LIBS
             picoros

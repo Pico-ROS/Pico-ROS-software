@@ -4,8 +4,7 @@
  * @date    2025-Jun-01
  * 
  * @details This file implements the ROS 2 parameter server functionality,
- *          providing parameter storage, retrieval, and manipulation capabilities
- *          for embedded systems.
+ *          providing parameter storage, retrieval, and manipulation capabilities.
  * 
  * @copyright Copyright (c) 2025 Ubiquity Robotics
  *******************************************************************************/
