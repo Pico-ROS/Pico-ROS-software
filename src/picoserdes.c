@@ -17,7 +17,6 @@
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
-// Base types for which we have external serialization functions
 /* Private constants ---------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 
@@ -40,7 +39,7 @@ SRV_LIST(TYPE_HASH, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
 bool ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg) {                      \
     return ucdr_serialize_##TYPE(writer, *msg);                                        \
 }
-#define PS_SER_BASE_SEQ(TYPE)                                                          \
+#define PS_SER_BASE_ARRAY(TYPE)                                                          \
 bool ps_ser_seq_##TYPE(ucdrBuffer* writer, TYPE* msg, uint32_t number) { \
     return ucdr_serialize_array_##TYPE(writer, msg, number);                           \
 }
@@ -48,20 +47,20 @@ bool ps_ser_seq_##TYPE(ucdrBuffer* writer, TYPE* msg, uint32_t number) { \
 bool ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) {                      \
     return ucdr_deserialize_##TYPE(reader, msg);                                       \
 }
-#define PS_DES_BASE_SEQ(TYPE)                                                          \
+#define PS_DES_BASE_ARRAY(TYPE)                                                          \
 bool ps_des_seq_##TYPE(ucdrBuffer* reader, TYPE* msg, uint32_t max_number) {    \
-    uint32_t len = 0;                                                                  \
-    return ucdr_deserialize_sequence_##TYPE(reader, msg, max_number, &len);            \
+    return ucdr_deserialize_array_##TYPE(reader, msg, max_number);            \
 }
 BASE_TYPES_LIST(PS_SER_BASE)
-BASE_TYPES_LIST(PS_SER_BASE_SEQ)
+BASE_TYPES_LIST(PS_SER_BASE_ARRAY)
 BASE_TYPES_LIST(PS_DES_BASE)
-BASE_TYPES_LIST(PS_DES_BASE_SEQ)
+BASE_TYPES_LIST(PS_DES_BASE_ARRAY)
 
 /* Public functions ----------------------------------------------------------*/
+
 /* ----- ucdr helper functions -----------------------------------------------*/
 // Deserialize string without copy
-__attribute__((weak)) bool ucdr_deserialize_rstring(ucdrBuffer* ub, char** pstring){
+bool ucdr_deserialize_rstring(ucdrBuffer* ub, char** pstring){
     uint32_t len = 0;
     bool ret = ucdr_deserialize_endian_uint32_t(ub, ub->endianness, &len);
     if (ret){
@@ -73,7 +72,7 @@ __attribute__((weak)) bool ucdr_deserialize_rstring(ucdrBuffer* ub, char** pstri
     return ret;
 }
 // Wrapper for having consistent names
-__attribute__((weak)) bool ucdr_serialize_rstring(ucdrBuffer* writer, char* pstring){
+bool ucdr_serialize_rstring(ucdrBuffer* writer, char* pstring){
     if (pstring == NULL){
         return ucdr_serialize_uint32_t(writer, 0);
     }
@@ -89,6 +88,13 @@ bool ucdr_serialize_array_rstring(ucdrBuffer* ub, char** strings, uint32_t numbe
     }
     return true;
 }
+
+// Deserialize strings array to array of string pointers
+bool ucdr_deserialize_array_rstring(ucdrBuffer* ub, char** strings, uint32_t number){
+    uint32_t read_number = 0;
+    return ucdr_deserialize_sequence_rstring(ub, strings, number, &read_number);
+}
+
 // Deserialize strings sequence to array of string pointers
 bool ucdr_deserialize_sequence_rstring(ucdrBuffer* ub, char** strings, uint32_t max_number, uint32_t* number){
     ucdr_deserialize_endian_uint32_t(ub, ub->endianness, number);

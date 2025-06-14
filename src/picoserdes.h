@@ -2,7 +2,7 @@
  * @file    picoserdes.h
  * @brief   Pico CDR Serialization/Deserialization Library
  * @date    2025-May-31
- * 
+ *
  * @details This library provides CDR (Common Data Representation) serialization and
  *          deserialization functionality for ROS messages. It wraps the Micro-CDR library
  *          and extends it with generic serialization/deserialization macros that work with
@@ -10,7 +10,7 @@
  *          to automatically generate the corresponding serialization and deserialization
  *          functions for those types at compile time. This eliminates the need to write custom
  *          serdes code for each message type while maintaining type safety through static typing.
- * 
+ *
  * @copyright Copyright (c) 2025 Ubiquity Robotics
  *******************************************************************************/
 
@@ -41,8 +41,8 @@
 #ifndef USER_TYPE_FILE
 /**
  * @brief Message type list macro
- * @details 
- * \verbatim 
+ * @details
+ * \verbatim
  * User provided list of message types for creating serdes functions
  * BTYPE = Basic type - only one member, implemented as typedef. FUNC(name, rmw_name, rmw_hash, type)
  * TTYPE = Typedef type - alias for ros type, implemented as typedef. FUNC(name, rmw_name, rmw_hash, type)
@@ -65,8 +65,8 @@
     #define MSG_LIST(BTYPE, CTYPE, TTYPE, FIELD, ARRAY)
 /**
  * @brief Service type list macro
- * @details 
- * \verbatim 
+ * @details
+ * \verbatim
  * User provided list of service types for creating serdes functions
  * SRV = Top level service name, hash and type. FUNC(srv_name, rmw_name, rmw_hash, <request>, <reply>)
  *      REQUEST / REPLY = Request/reply type, implemented as struct. FUNC(<fields...>)
@@ -100,7 +100,7 @@
  * @brief List of supported base types
  * @details This macro defines all primitive types that can be serialized/deserialized.
  *          Each type is processed by the provided TYPE macro.
- * 
+ *
  * @param TYPE Macro function to process each base type. Will be called as TYPE(type_name)
  *             where type_name is one of types in the list.
  */
@@ -265,7 +265,23 @@ BASE_TYPES_LIST(PS_DES_FUNC_DEF)
 #define PS_SEL_SRV_DES(TYPE, ...)                       \
             request_##TYPE*: ps_des_##TYPE##_request,   \
             reply_##TYPE*: ps_des_##TYPE##_reply,
+
+// Helpers needed for using _ps_serialize in macros given to xxx_LIST xmacros
+// xxx_LIST macro expanison needs to be deffered to allow rescaning and expanding the second time
+#define PS_EMPTY(...)
+#define PS_DEFER(id) id PS_EMPTY()()
+#define PS_OBSTRUCT(...) __VA_ARGS__ PS_DEFER(PS_EMPTY)()
+#define PS_EXPAND(...) __VA_ARGS__
+#define MSG_LIST_INDIRECT() MSG_LIST
+#define SRV_LIST_INDIRECT() SRV_LIST
+#define BASE_TYPES_LIST_INDIRECT() BASE_TYPES_LIST
+#define MSG_LIST_EXPAND(...)        PS_EXPAND(MSG_LIST(__VA_ARGS__))
+#define SRV_LIST_EXPAND(...)        PS_EXPAND(SRV_LIST(__VA_ARGS__))
+#define BASE_TYPES_LIST_EXPAND(...) PS_EXPAND(BASE_TYPES_LIST(__VA_ARGS__))
+
 /** @} */
+
+
 
 /**
  * @defgroup generic_serdes_macros Generic serdes macros
@@ -280,21 +296,21 @@ BASE_TYPES_LIST(PS_DES_FUNC_DEF)
  * @param MAX Maximum buffer size
  * @return Size of serialized message
  */
-#define ps_serialize(pBUF, pMSG, MAX)                                                   \
-    ({                                                                                  \
-        ucdrBuffer writer = {};                                                         \
-        *((uint32_t*)pBUF) =  0x0100; /*Little endian header*/                          \
-        ucdr_init_buffer(&writer, pBUF+4, MAX-4);                                       \
-        _Generic((pMSG),                                                                \
-            BASE_TYPES_LIST(PS_SEL_SER)                                                 \
-            MSG_LIST(PS_UNUSED, PS_SEL_SER, PS_UNUSED, PS_UNUSED, PS_UNUSED)            \
-            SRV_LIST(PS_SEL_SRV_SER, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)        \
-            default: 0                                                                  \
-        )(&writer, pMSG);                                                               \
-        size_t _ret = ucdr_buffer_length(&writer) + 4;                                  \
-        _ret;                                                                           \
+#define ps_serialize(pBUF, pMSG, MAX) PS_EXPAND(_ps_serialize(pBUF, pMSG, MAX))
+#define _ps_serialize(pBUF, pMSG, MAX)                                                              \
+    ({                                                                                              \
+        ucdrBuffer writer = {};                                                                     \
+        *((uint32_t*)pBUF) =  0x0100; /*Little endian header*/                                      \
+        ucdr_init_buffer(&writer, pBUF+4, MAX-4);                                                   \
+        _Generic((pMSG),                                                                            \
+            PS_DEFER(BASE_TYPES_LIST_INDIRECT)(PS_SEL_SER)                                          \
+            PS_DEFER(MSG_LIST_INDIRECT)(PS_UNUSED, PS_SEL_SER, PS_UNUSED, PS_UNUSED, PS_UNUSED)     \
+            PS_DEFER(SRV_LIST_INDIRECT)(PS_SEL_SRV_SER, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED) \
+            default: 0                                                                              \
+        )(&writer, pMSG);                                                                           \
+        size_t _ret = ucdr_buffer_length(&writer) + 4;                                              \
+        _ret;                                                                                       \
     })
-
 /**
  * @brief Generic deserialization macro
  * @param pBUF Pointer to raw CDR message buffer
@@ -302,17 +318,18 @@ BASE_TYPES_LIST(PS_DES_FUNC_DEF)
  * @param MAX Maximum buffer size
  * @return true if deserialization successful
  */
-#define ps_deserialize(pBUF, pMSG, MAX)                                                 \
-    ({                                                                                  \
-        ucdrBuffer reader = {};                                                         \
-        ucdr_init_buffer(&reader, pBUF + sizeof(uint32_t), MAX - sizeof(uint32_t));     \
-        bool _ok = _Generic((pMSG),                                                     \
-            BASE_TYPES_LIST(PS_SEL_DES)                                                 \
-            MSG_LIST(PS_UNUSED, PS_SEL_DES, PS_UNUSED, PS_UNUSED, PS_UNUSED)           \
-            SRV_LIST(PS_SEL_SRV_DES, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)        \
-            default: 0                                                                  \
-        )(&reader, pMSG);                                                               \
-        _ok;                                                                            \
+#define ps_deserialize(pBUF, pMSG, MAX) PS_EXPAND(_ps_deserialize(pBUF, pMSG, MAX))
+#define _ps_deserialize(pBUF, pMSG, MAX)                                                            \
+    ({                                                                                              \
+        ucdrBuffer reader = {};                                                                     \
+        ucdr_init_buffer(&reader, pBUF + sizeof(uint32_t), MAX - sizeof(uint32_t));                 \
+        bool _ok = _Generic((pMSG),                                                                 \
+            PS_DEFER(BASE_TYPES_LIST_INDIRECT)(PS_SEL_DES)                                          \
+            PS_DEFER(MSG_LIST_INDIRECT)(PS_UNUSED, PS_SEL_DES, PS_UNUSED, PS_UNUSED, PS_UNUSED)     \
+            PS_DEFER(SRV_LIST_INDIRECT)(PS_SEL_SRV_DES, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED) \
+            default: 0                                                                              \
+        )(&reader, pMSG);                                                                           \
+        _ok;                                                                                        \
     })
 
 /** @} */
@@ -331,7 +348,7 @@ BASE_TYPES_LIST(PS_DES_FUNC_DEF)
 bool ucdr_deserialize_rstring(ucdrBuffer* ub, char** pstring);
 
 /**
- * @brief Serialize a ROS string
+ * @brief Serialize a string
  * @param writer CDR buffer
  * @param pstring String to serialize
  * @return true if serialization successful
@@ -339,7 +356,7 @@ bool ucdr_deserialize_rstring(ucdrBuffer* ub, char** pstring);
 bool ucdr_serialize_rstring(ucdrBuffer* writer, char* pstring);
 
 /**
- * @brief Serialize an array of ROS strings
+ * @brief Serialize an array of strings
  * @param ub CDR buffer
  * @param strings Array of strings
  * @param number Number of strings
@@ -348,7 +365,7 @@ bool ucdr_serialize_rstring(ucdrBuffer* writer, char* pstring);
 bool ucdr_serialize_array_rstring(ucdrBuffer* ub, char** strings, uint32_t number);
 
 /**
- * @brief Deserialize a sequence of ROS strings
+ * @brief Deserialize a sequence of strings
  * @param ub CDR buffer
  * @param strings Array to store strings
  * @param max_number Maximum number of strings
@@ -356,6 +373,15 @@ bool ucdr_serialize_array_rstring(ucdrBuffer* ub, char** strings, uint32_t numbe
  * @return true if deserialization successful
  */
 bool ucdr_deserialize_sequence_rstring(ucdrBuffer* ub, char** strings, uint32_t max_number, uint32_t* number);
+
+/**
+ * @brief Deserialize array of strings
+ * @param ub CDR buffer
+ * @param strings Array to store strings
+ * @param number Actual number of strings read
+ * @return true if deserialization successful
+ */
+bool ucdr_deserialize_array_rstring(ucdrBuffer* ub, char** strings, uint32_t number);
 
 /**
  * @brief Start writing a sequence

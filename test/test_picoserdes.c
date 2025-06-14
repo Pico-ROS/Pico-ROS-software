@@ -4,18 +4,18 @@
  * @brief   Unit tests for picoserdes serialization/deserialization
  ******************************************************************************
  */
+#include <stdlib.h>
 #include <stdbool.h>
-#undef NDEBUG
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include <stdlib.h>
-#include <time.h>
 #include "../src/picoserdes.h"
 
-// Buffer size for serialization tests
-#define TEST_BUFFER_SIZE 4096
+#undef NDEBUG
+
+// Buffer size for serialization tests allocated on stack
+#define TEST_BUFFER_SIZE 1024
 
 // Formatting constants
 #define HEADER_WIDTH 80
@@ -36,7 +36,7 @@ void print_header(const char* title) {
 }
 
 void print_test_result(const char* type_name, bool passed) {
-    printf("%s%s[%s] Test %s: %s%s\n", 
+    printf("%s%s[%s] Test %s: %s%s\n",
            TEST_INDENT,
            passed ? GREEN_TEXT : RED_TEXT,
            passed ? "✓" : "✗",
@@ -44,91 +44,109 @@ void print_test_result(const char* type_name, bool passed) {
            passed ? "PASSED" : "FAILED",
            RESET_TEXT);
 }
-bool disable_type;
-bool some_test_failed;
 
-/* Override functions for rstring */
-bool ucdr_deserialize_rstring(ucdrBuffer* ub, char** pstring){
-    ucdr_serialize_uint32_t(ub, 0);
-    return true;
-}
-bool ucdr_serialize_rstring(ucdrBuffer* ub, char* pstring){
-    uint32_t len = 0;
-    ucdr_deserialize_uint32_t(ub, &len);
-    disable_type = true;
-    return true;
-}
 
-// Test macro for generating type-specific test functions
+/* Test macro for generating type-specific test functions.
+ * Works by:
+ *      1. Serializing constant value of #type to buffer1
+ *      2. Deserializing to new variable of #type from buffer1
+ *      3. Serializing new variable to buffer2
+ *      4. Compare buffer1 & buffer2
+ * Comparing new variable to constant value fails if type includes strings.
+ */
 #define TEST_TYPE(type, ...) \
-do { \
-    uint8_t buffer[TEST_BUFFER_SIZE]; \
-    uint8_t random_value[sizeof(type)] = {0}; \
-    for (size_t i = 0; i < 1/* sizeof(type) */; i++) { /* Problems with arrays */\
-        random_value[i] = (uint8_t)rand(); \
-    } \
-    type* original = (type*)random_value; \
-    type deserialized; \
-    /* Serialize */ \
-    ucdrBuffer writer = {}; \
-    ucdr_init_buffer(&writer, buffer, TEST_BUFFER_SIZE); \
-    bool ser_success = ps_ser_##type(&writer, original); \
-    if(disable_type){ \
-        disable_type = false; \
-        printf("%s%s[%s] Test %s: %s%s\n", TEST_INDENT, YELLOW_TEXT, "s", #type, "SKIPPED", RESET_TEXT);\
-        continue; \
-    } \
-    /* Deserialize */ \
-    ucdrBuffer reader = {}; \
-    ucdr_init_buffer(&reader, buffer, TEST_BUFFER_SIZE); \
-    bool des_success = ps_des_##type(&reader, &deserialized); \
-    /* Compare and print result */ \
-    bool test_passed = false; \
-    if(strcmp(#type, "bool") == 0) { \
-        bool original_bool = *((bool*)original); \
-        bool deserialized_bool = *((bool*)&deserialized); \
-        test_passed = (original_bool == true && deserialized_bool == true) || (original_bool == false && deserialized_bool == false ); \
-    } \
-    else { \
-        test_passed = (memcmp(original, &deserialized, sizeof(type)) == 0); \
-    }\
-    print_test_result(#type, test_passed); \
-    if(!test_passed){ \
-        some_test_failed = true; \
-    } \
-    /*assert(test_passed && "Serialized and deserialized values do not match");*/ \
-} while (0);
+    do { \
+        uint8_t buffer[TEST_BUFFER_SIZE]; \
+        uint8_t buffer2[TEST_BUFFER_SIZE]; \
+        type* original = &test_##type; \
+        type deserialized; \
+        /* Serialize */ \
+        size_t len = _ps_serialize(buffer, original, TEST_BUFFER_SIZE); \
+        /* Deserialize */ \
+        _ps_deserialize(buffer, &deserialized, TEST_BUFFER_SIZE); \
+        /* Serialize deserialized */ \
+        _ps_serialize(buffer2, &deserialized, TEST_BUFFER_SIZE); \
+        /* Compare serialized buffers and print result */ \
+        bool test_passed = (memcmp(buffer, buffer2, len) == 0); \
+        print_test_result(#type, test_passed); \
+        if(!test_passed){ \
+            some_test_failed = true; \
+            printf("\n Original: \n"); \
+            for (int i = 0; i < len; i++){\
+                printf("%02x ", buffer[i]); \
+                if((i+1)%32 == 0){printf("\n");}\
+            }\
+            printf("\n Deserialized: \n"); \
+            for (int i = 0; i < len; i++){\
+                printf("%02x ", buffer2[i]); \
+                if((i+1)%32 == 0){printf("\n");}\
+            }\
+            printf("\n\n"); \
+        } \
+    } while (0);
+
+/* Helper macros for constant values generation */
+#define MAKE_TEST_BTYPE(TYPE, NAME, HASH, TYPE2, ...)  \
+    TYPE test_##TYPE = test_##TYPE2;
+
+#define MAKE_TEST_FIELD(TYPE, NAME) \
+    .NAME = test_##TYPE,
+
+#define MAKE_TEST_ARRAY(TYPE, NAME, SIZE) \
+    .NAME = {1, 2},
+
+#define MAKE_TEST_CTYPE(TYPE, NAME, HASH, ...)  \
+    TYPE test_##TYPE = {  __VA_ARGS__ };
 
 
+#define MAKE_SRV_TEST(TYPE, NAME, HASH, REQ, REP) \
+    request_##TYPE test_request_##TYPE = {  REQ }; \
+    reply_##TYPE test_reply_##TYPE = {  REP };
 
-// #define TEST_SRV(TYPE, ...) \
-//     TEST_TYPE(request_##TYPE) \
-//     TEST_TYPE(reply_##TYPE) 
+#define TEST_SRV(TYPE, ...) \
+    TEST_TYPE(request_##TYPE) \
+    TEST_TYPE(reply_##TYPE)
 
-//TODO: Fix arrays and strings serdes tests. Add service tests.
 
 int main() {
-    // Initialize random seed
-    srand(time(NULL));
-    
     print_header("PICOSERDES UNIT TESTS");
-    
-    print_header("Base Types Tests");
-    BASE_TYPES_LIST(TEST_TYPE)
+    bool some_test_failed = false;
 
-    print_header("Message Types Tests");
-    MSG_LIST(TEST_TYPE, TEST_TYPE, PS_UNUSED, PS_UNUSED, PS_UNUSED)
-    
-    // print_header("Service Types Tests");
-    // SRV_LIST(TEST_SRV, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+    // Input data - base types
+    bool test_bool = true;
+    int8_t test_int8_t = -11;
+    uint8_t test_uint8_t = 201;
+    int16_t test_int16_t = -30000;
+    uint16_t test_uint16_t = 30000;
+    int32_t test_int32_t = 0xFEFEFEFE;
+    uint32_t test_uint32_t = 0xFEFEFEFE;
+    int64_t test_int64_t  = 0xFEFEFEFEFEFEFEFE;
+    uint64_t test_uint64_t = 0xFEFEFEFEFEFEFEFE;
+    float test_float= 0.5f;
+    double test_double = 0.12345;
+    char* test_rstring = "This is a test string";
+
+    // Input data - user types - link base types above
+    MSG_LIST_EXPAND(MAKE_TEST_BTYPE, MAKE_TEST_CTYPE, MAKE_TEST_BTYPE, MAKE_TEST_FIELD, MAKE_TEST_ARRAY)
+    SRV_LIST_EXPAND(MAKE_SRV_TEST, PS_UNUSED, PS_UNUSED, MAKE_TEST_FIELD, MAKE_TEST_ARRAY)
+
+    print_header("Base Types Tests:");
+    BASE_TYPES_LIST_EXPAND(TEST_TYPE)
+
+    print_header("Message Types Tests:");
+    MSG_LIST_EXPAND(PS_UNUSED, TEST_TYPE, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+
+    print_header("Service Types Tests:");
+    SRV_LIST_EXPAND(TEST_SRV, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
 
     if(some_test_failed){
-        printf("\n%s%s Some tests failed! %s\n\n", 
+        printf("\n%s%s Some tests failed! %s\n\n",
                BOLD_TEXT, RED_TEXT, RESET_TEXT);
+        return EXIT_FAILURE;
     }
     else{
-        printf("\n%s%s All tests completed successfully! %s\n\n", 
+        printf("\n%s%s All tests completed successfully! %s\n\n",
                BOLD_TEXT, GREEN_TEXT, RESET_TEXT);
+        return EXIT_SUCCESS;
     }
-    return 0;
 }
