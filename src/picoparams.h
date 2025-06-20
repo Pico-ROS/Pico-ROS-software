@@ -27,8 +27,10 @@
 #include "picoserdes.h"
 
 /* Exported types ------------------------------------------------------------*/
-/** @brief Maximum number of strings in a parameter request @ingroup picoparams */
-#define MAX_REQUEST_STRINGS 50
+/** @brief Maximum number of strings in a single parameter request
+ * (prefixes for list, parameters for get/set)
+ * @ingroup picoparams */
+#define PP_MAX_REQUEST_STRINGS 50
 
 
  /**
@@ -111,7 +113,7 @@ typedef struct {
     char* name;                    /**< Parameter name */
     ros_ParameterType type:8;      /**< Parameter type */
     char* description;             /**< Parameter description */
-    char* additional_constraints;   /**< Additional constraints as string */
+    char* additional_constraints;  /**< Additional constraints as string */
     bool read_only;                /**< Whether parameter is read-only */
     bool dynamic_typing;           /**< Whether parameter type can change */
     union {
@@ -199,27 +201,6 @@ typedef struct {
 
 /** @} */
 
-
- /**
- * @defgroup picoparams_server Parameter server
- * @ingroup picoparams
- * @{
- */
-
-/**
- * @brief Parameter server instance
- */
-typedef struct {
-    picoparams_interface_t interface;    /**< Parameter interface */
-    picoros_service_t get_srv;           /**< Get parameter service */
-    picoros_service_t list_srv;          /**< List parameters service */
-    picoros_service_t set_srv;           /**< Set parameter service */
-    picoros_service_t describe_srv;      /**< Describe parameter service */
-    picoros_service_t get_types_srv;     /**< Get parameter types service */
-    picoros_service_t set_atomic_srv;    /**< Set atomic parameter service */
-    ucdr_writer_t* current_writer;       /**< Current writer context */
-} picoparams_server_t;
-
 /**
  * @brief Initialize parameter server
  * @param server Parameter server instance
@@ -227,9 +208,8 @@ typedef struct {
  * @param ifx Parameter interface
  * @return PICOROS_OK on success, error code otherwise
  */
-picoros_res_t picoparams_init(picoparams_server_t* server, picoros_node_t* node, picoparams_interface_t ifx);
+picoros_res_t picoparams_init(picoros_node_t* node, picoparams_interface_t ifx);
 
-/** @} */
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/

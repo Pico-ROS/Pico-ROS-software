@@ -75,10 +75,6 @@ parameter_t params[N_PARAMS] = {
     },
 };
 
-
-
-picoparams_server_t params_server;
-
 // Parameters server api functions declaration
 void*                   api_param_ref(char* name);
 ros_ParameterDescriptor api_param_describe(void* param);
@@ -87,8 +83,6 @@ ros_ParameterType       api_param_type(void* param);
 bool                    api_param_set(void* param, ros_ParameterValue* value, char** error_msg);
 int                     api_param_list(char* prefix,  void (*write_next)(char* param_name) );
 int                     api_prefix_list(char* prefix,  void (*write_next)(char* prefix_name) );
-
-
 
 
 int main(int argc, char **argv){
@@ -120,7 +114,7 @@ int main(int argc, char **argv){
             .reply_buf = srv_buf,
             .reply_buf_size = STATIC_BUF_SIZE,
     };
-    if (picoparams_init(&params_server, &node, params_ifx) != PICOROS_OK){
+    if (picoparams_init(&node, params_ifx) != PICOROS_OK){
         printf("Parameters server init failed.\n");
         exit(-1);
     }

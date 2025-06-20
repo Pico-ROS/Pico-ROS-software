@@ -12,12 +12,112 @@
 /* Private includes ----------------------------------------------------------*/
 #include "picoparams.h"
 /* Private typedef -----------------------------------------------------------*/
+
+typedef struct {
+    picoparams_interface_t interface;    /**< Parameter interface */
+    picoros_service_t get_srv;           /**< Get parameter service */
+    picoros_service_t list_srv;          /**< List parameters service */
+    picoros_service_t set_srv;           /**< Set parameter service */
+    picoros_service_t describe_srv;      /**< Describe parameter service */
+    picoros_service_t get_types_srv;     /**< Get parameter types service */
+    picoros_service_t set_atomic_srv;    /**< Set atomic parameter service */
+    ucdr_writer_t* current_writer;       /**< Current writer context */
+} picoparams_server_t;
+
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private constants ---------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
-picoparams_server_t* pserver;
 /* Private function prototypes -----------------------------------------------*/
+picoros_service_reply_t params_server_handler(uint8_t* request_data, size_t request_size, void* user_data);
+
+/* Private variables ---------------------------------------------------------*/
+/* Parameter topic names and hashes */
+picoparams_server_t pserver = {
+    .get_srv = {
+        .topic = {
+            .name = "get_parameters",
+            .type = "rcl_interfaces::srv::dds_::GetParameters",
+            .rihs_hash = "bf9803d5c74cf989a5de3e0c2e99444599a627c7ff75f97b8c05b01003675cbc",
+        },
+        .user_callback = params_server_handler,
+        .user_data = &pserver.get_srv,
+    },
+    .list_srv = {
+        .topic = {
+            .name = "list_parameters",
+            .type = "rcl_interfaces::srv::dds_::ListParameters",
+            .rihs_hash = "3e6062bfbb27bfb8730d4cef2558221f51a11646d78e7bb30a1e83afac3aad9d",
+        },
+        .user_callback = params_server_handler,
+        .user_data = &pserver.list_srv,
+    },
+    .set_srv = {
+        .topic = {
+            .name = "set_parameters",
+            .type = "rcl_interfaces::srv::dds_::SetParameters",
+            .rihs_hash = "56eed9a67e169f9cb6c1f987bc88f868c14a8fc9f743a263bc734c154015d7e0",
+        },
+        .user_callback = params_server_handler,
+        .user_data = &pserver.set_srv,
+    },
+    .describe_srv = {
+        .topic = {
+            .name = "describe_parameters",
+            .type = "rcl_interfaces::srv::dds_::DescribeParameters",
+            .rihs_hash = "845b484d71eb0673dae682f2e3ba3c4851a65a3dcfb97bddd82c5b57e91e4cff",
+        },
+        .user_callback = params_server_handler,
+        .user_data = &pserver.describe_srv,
+    },
+    .set_atomic_srv = {
+        .topic = {
+            .name = "set_parameters_atomically",
+            .type = "rcl_interfaces::srv::dds_::SetParametersAtomically",
+            .rihs_hash = "0e192ef259c07fc3c07a13191d27002222e65e00ccec653ca05e856f79285fcd",
+        },
+        .user_callback = params_server_handler,
+        .user_data = &pserver.set_atomic_srv,
+    },
+    .get_types_srv = {
+        .topic = {
+            .name = "get_parameter_types",
+            .type = "rcl_interfaces::srv::dds_::GetParameterTypes",
+            .rihs_hash = "da199c878688b3e530bdfe3ca8f74cb9fa0c303101e980a9e8f260e25e1c80ca",
+        },
+        .user_callback = params_server_handler,
+        .user_data = &pserver.get_types_srv,
+    },
+};
+
+/* Public functions ----------------------------------------------------------*/
+
+picoros_res_t picoparams_init(picoros_node_t* node, picoparams_interface_t ifx){
+    #define SET_NOT_NULL_OR_RETURN(var, set) {if (set != 0){ var=set; } else{ return PICOROS_ERROR; }}
+
+    if (node == NULL){ return PICOROS_ERROR; }
+    SET_NOT_NULL_OR_RETURN(pserver.interface.f_ref, ifx.f_ref);
+    SET_NOT_NULL_OR_RETURN(pserver.interface.f_get, ifx.f_get);
+    SET_NOT_NULL_OR_RETURN(pserver.interface.f_set, ifx.f_set);
+    SET_NOT_NULL_OR_RETURN(pserver.interface.f_describe, ifx.f_describe);
+    SET_NOT_NULL_OR_RETURN(pserver.interface.f_type, ifx.f_type);
+    SET_NOT_NULL_OR_RETURN(pserver.interface.f_prefixes, ifx.f_prefixes);
+    SET_NOT_NULL_OR_RETURN(pserver.interface.f_list, ifx.f_list);
+    SET_NOT_NULL_OR_RETURN(pserver.interface.reply_buf, ifx.reply_buf);
+    SET_NOT_NULL_OR_RETURN(pserver.interface.reply_buf_size, ifx.reply_buf_size);
+
+    // declare needed services
+    if(picoros_service_declare(node, &pserver.get_srv) != PICOROS_OK){ return PICOROS_ERROR; }
+    if(picoros_service_declare(node, &pserver.list_srv) != PICOROS_OK){ return PICOROS_ERROR; }
+    if(picoros_service_declare(node, &pserver.set_srv) != PICOROS_OK){ return PICOROS_ERROR; }
+    if(picoros_service_declare(node, &pserver.describe_srv) != PICOROS_OK){ return PICOROS_ERROR; }
+    if(picoros_service_declare(node, &pserver.set_atomic_srv) != PICOROS_OK){ return PICOROS_ERROR; }
+    if(picoros_service_declare(node, &pserver.get_types_srv) != PICOROS_OK){ return PICOROS_ERROR; }
+
+    return PICOROS_OK;
+
+}
+
+
 /* Private functions ---------------------------------------------------------*/
 static size_t serialize_ros_ParameterValue(ucdrBuffer* writer, ros_ParameterValue* val){
 
@@ -166,14 +266,14 @@ static size_t serialize_rcl_ParameterDescriptor(ucdrBuffer* writer, ros_Paramete
 
 void string_stream_writer(char* string){
     if (string == NULL) {return;}
-    ucdr_serialize_rstring(pserver->current_writer->p_buffer, string);
+    ucdr_serialize_rstring(pserver.current_writer->p_buffer, string);
 }
 
 size_t list_params(picoparams_server_t* server, ucdrBuffer* reader, ucdrBuffer* writer){
-    char* prefixes[MAX_REQUEST_STRINGS];
+    char* prefixes[PP_MAX_REQUEST_STRINGS];
     uint64_t depth = 0;
     uint32_t n_prefixes = 0;
-    ucdr_deserialize_sequence_rstring(reader, prefixes, MAX_REQUEST_STRINGS, &n_prefixes);
+    ucdr_deserialize_sequence_rstring(reader, prefixes, PP_MAX_REQUEST_STRINGS, &n_prefixes);
     ucdr_deserialize_uint64_t(reader, &depth);
 
     if (n_prefixes == 0){
@@ -183,20 +283,20 @@ size_t list_params(picoparams_server_t* server, ucdrBuffer* reader, ucdrBuffer* 
     // init string list writer
     uint32_t total_params = 0;
     ucdr_writer_t wr_params = ucdr_seq_start(writer);
-    pserver->current_writer = &wr_params;
+    pserver.current_writer = &wr_params;
     for (int i = 0; i < n_prefixes; i++){
         // for all given prefixes
-        total_params += server->interface.f_list(prefixes[i], string_stream_writer);
+        total_params += pserver.interface.f_list(prefixes[i], string_stream_writer);
     }
     ucdr_seq_set_size(&wr_params, total_params);
     ucdr_seq_end(&wr_params);
 
     uint32_t total_prefixes = 0;
     ucdr_writer_t wr_prefix = ucdr_seq_start(writer);
-    pserver->current_writer = &wr_prefix;
+    pserver.current_writer = &wr_prefix;
     for (int i = 0; i < n_prefixes; i++){
         // for all given prefixes
-        total_prefixes += server->interface.f_prefixes(prefixes[i], string_stream_writer);
+        total_prefixes += pserver.interface.f_prefixes(prefixes[i], string_stream_writer);
     }
     ucdr_seq_set_size(&wr_prefix, total_prefixes);
     ucdr_seq_end(&wr_prefix);
@@ -205,16 +305,16 @@ size_t list_params(picoparams_server_t* server, ucdrBuffer* reader, ucdrBuffer* 
 }
 
 static size_t get_params_value(picoparams_server_t* server, ucdrBuffer* reader, ucdrBuffer* writer){
-    char* target_params[MAX_REQUEST_STRINGS];
+    char* target_params[PP_MAX_REQUEST_STRINGS];
     uint32_t n_targets = 0;
-    ucdr_deserialize_sequence_rstring(reader, target_params, MAX_REQUEST_STRINGS, &n_targets);
+    ucdr_deserialize_sequence_rstring(reader, target_params, PP_MAX_REQUEST_STRINGS, &n_targets);
 
     ucdr_serialize_uint32_t(writer, n_targets);
     for (int i = 0; i < n_targets; i++){
-       void* param = server->interface.f_ref(target_params[i]);
+       void* param = pserver.interface.f_ref(target_params[i]);
        ros_ParameterValue val = {};
        if (param){
-           val = server->interface.f_get(param);
+           val = pserver.interface.f_get(param);
        }
        serialize_ros_ParameterValue(writer, &val);
     }
@@ -229,7 +329,7 @@ static size_t set_params_value(picoparams_server_t* server, ucdrBuffer* reader, 
     ucdr_serialize_uint32_t(writer, n_targets);
     for (int i = 0; i < n_targets; i++){
         ucdr_deserialize_rstring(reader, &path);
-        void* param = server->interface.f_ref(path);
+        void* param = pserver.interface.f_ref(path);
         if(param == NULL){
             ucdr_serialize_bool(writer, false);
             ucdr_serialize_string(writer, "Parameter not found");
@@ -238,7 +338,7 @@ static size_t set_params_value(picoparams_server_t* server, ucdrBuffer* reader, 
         ros_ParameterValue val = {};
         deserialize_ros_ParameterValue(reader, &val);
         char* error_msg = NULL;
-        bool status = server->interface.f_set(param, &val, &error_msg);
+        bool status = pserver.interface.f_set(param, &val, &error_msg);
         ucdr_serialize_bool(writer, status);
         if (status){
             ucdr_serialize_uint32_t(writer, 0);
@@ -251,15 +351,15 @@ static size_t set_params_value(picoparams_server_t* server, ucdrBuffer* reader, 
 }
 
 static size_t get_params_type(picoparams_server_t* server, ucdrBuffer* reader, ucdrBuffer* writer){
-    char* target_params[MAX_REQUEST_STRINGS];
+    char* target_params[PP_MAX_REQUEST_STRINGS];
     uint32_t n_targets = 0;
-    ucdr_deserialize_sequence_rstring(reader, target_params, MAX_REQUEST_STRINGS, &n_targets);
+    ucdr_deserialize_sequence_rstring(reader, target_params, PP_MAX_REQUEST_STRINGS, &n_targets);
 
     ucdr_serialize_uint32_t(writer, n_targets);
     for (int i = 0; i < n_targets; i++){
-        void* param = server->interface.f_ref(target_params[i]);
+        void* param = pserver.interface.f_ref(target_params[i]);
         if (param){
-            ucdr_serialize_uint8_t(writer, server->interface.f_type(param));
+            ucdr_serialize_uint8_t(writer, pserver.interface.f_type(param));
         }
         else{
             ucdr_serialize_uint8_t(writer, 0);
@@ -269,16 +369,16 @@ static size_t get_params_type(picoparams_server_t* server, ucdrBuffer* reader, u
 }
 
 static size_t describe_params(picoparams_server_t* server, ucdrBuffer* reader, ucdrBuffer* writer){
-    char* target_params[MAX_REQUEST_STRINGS];
+    char* target_params[PP_MAX_REQUEST_STRINGS];
     uint32_t n_targets = 0;
-    ucdr_deserialize_sequence_rstring(reader, target_params, MAX_REQUEST_STRINGS, &n_targets);
+    ucdr_deserialize_sequence_rstring(reader, target_params, PP_MAX_REQUEST_STRINGS, &n_targets);
 
     ucdr_serialize_uint32_t(writer, n_targets);
     for (int i = 0; i < n_targets; i++){
-        void* param = server->interface.f_ref(target_params[i]);
+        void* param = pserver.interface.f_ref(target_params[i]);
         ros_ParameterDescriptor pdesc = {};
         if (param){
-            pdesc = server->interface.f_describe(param);
+            pdesc = pserver.interface.f_describe(param);
         }
         pdesc.name = target_params[i]; // get request param name
         serialize_rcl_ParameterDescriptor(writer, &pdesc);
@@ -296,117 +396,30 @@ picoros_service_reply_t params_server_handler(uint8_t* request_data, size_t requ
     ucdrBuffer querry_writter = {};
     ucdrBuffer querry_reader = {};
     ucdr_init_buffer(&querry_reader, request_data + 4, request_size - 4);
-    *((uint32_t*)pserver->interface.reply_buf) = 0x0100;
-    ucdr_init_buffer(&querry_writter, pserver->interface.reply_buf + 4, pserver->interface.reply_buf_size - 4);
+    *((uint32_t*)pserver.interface.reply_buf) = 0x0100;
+    ucdr_init_buffer(&querry_writter, pserver.interface.reply_buf + 4, pserver.interface.reply_buf_size - 4);
     size_t ret = 0;
-    if (s == &pserver->list_srv){
-        ret = list_params(pserver, &querry_reader, &querry_writter);
+    if (s == &pserver.list_srv){
+        ret = list_params(&pserver, &querry_reader, &querry_writter);
     }
-    else if(s == &pserver->describe_srv){
-        ret = describe_params(pserver, &querry_reader, &querry_writter);
+    else if(s == &pserver.describe_srv){
+        ret = describe_params(&pserver, &querry_reader, &querry_writter);
     }
-    else if(s == &pserver->get_srv){
-        ret = get_params_value(pserver, &querry_reader, &querry_writter);
+    else if(s == &pserver.get_srv){
+        ret = get_params_value(&pserver, &querry_reader, &querry_writter);
     }
-    else if(s == &pserver->set_srv){
-        ret = set_params_value(pserver, &querry_reader, &querry_writter);
-//        new_params_set = 1;
-//        timer_start(&params_set_timer);
+    else if(s == &pserver.set_srv){
+        ret = set_params_value(&pserver, &querry_reader, &querry_writter);
     }
-    else if(s == &pserver->get_types_srv){
-        ret = get_params_type(pserver, &querry_reader, &querry_writter);
+    else if(s == &pserver.get_types_srv){
+        ret = get_params_type(&pserver, &querry_reader, &querry_writter);
+    }
+    else if(s == &pserver.set_atomic_srv){
+        // Not implemented
     }
 
-    reply.data = pserver->interface.reply_buf;
+    reply.data = pserver.interface.reply_buf;
     reply.length = ret + 4;
     return reply;
-}
-
-/* Public functions ----------------------------------------------------------*/
-
-picoros_res_t picoparams_init(picoparams_server_t* server, picoros_node_t* node, picoparams_interface_t ifx){
-    #define SET_NOT_NULL_OR_RETURN(var, set) {if (set != 0){ var=set; } else{ return PICOROS_ERROR; }}
-
-    if (node == NULL){ return PICOROS_ERROR; }
-    SET_NOT_NULL_OR_RETURN(pserver, server);
-    SET_NOT_NULL_OR_RETURN(server->interface.f_ref, ifx.f_ref);
-    SET_NOT_NULL_OR_RETURN(server->interface.f_get, ifx.f_get);
-    SET_NOT_NULL_OR_RETURN(server->interface.f_set, ifx.f_set);
-    SET_NOT_NULL_OR_RETURN(server->interface.f_describe, ifx.f_describe);
-    SET_NOT_NULL_OR_RETURN(server->interface.f_type, ifx.f_type);
-    SET_NOT_NULL_OR_RETURN(server->interface.f_prefixes, ifx.f_prefixes);
-    SET_NOT_NULL_OR_RETURN(server->interface.f_list, ifx.f_list);
-    SET_NOT_NULL_OR_RETURN(server->interface.reply_buf, ifx.reply_buf);
-    SET_NOT_NULL_OR_RETURN(server->interface.reply_buf_size, ifx.reply_buf_size);
-
-    // declare needed services
-    server->get_srv = (picoros_service_t){
-        .topic = {
-            .name = "get_parameters",
-            .type = "rcl_interfaces::srv::dds_::GetParameters",
-            .rihs_hash = "bf9803d5c74cf989a5de3e0c2e99444599a627c7ff75f97b8c05b01003675cbc",
-        },
-        .user_callback = params_server_handler,
-        .user_data = &server->get_srv,
-    };
-    if (picoros_service_declare(node, &server->get_srv) != PICOROS_OK){ return PICOROS_ERROR; }
-
-    server->list_srv = (picoros_service_t){
-        .topic = {
-            .name = "list_parameters",
-            .type = "rcl_interfaces::srv::dds_::ListParameters",
-            .rihs_hash = "3e6062bfbb27bfb8730d4cef2558221f51a11646d78e7bb30a1e83afac3aad9d",
-        },
-        .user_callback = params_server_handler,
-        .user_data = &server->list_srv,
-    };
-    if(picoros_service_declare(node, &server->list_srv) != PICOROS_OK){ return PICOROS_ERROR; }
-
-    server->set_srv = (picoros_service_t){
-        .topic = {
-            .name = "set_parameters",
-            .type = "rcl_interfaces::srv::dds_::SetParameters",
-            .rihs_hash = "56eed9a67e169f9cb6c1f987bc88f868c14a8fc9f743a263bc734c154015d7e0",
-        },
-        .user_callback = params_server_handler,
-        .user_data = &server->set_srv,
-    };
-    if(picoros_service_declare(node, &server->set_srv) != PICOROS_OK){ return PICOROS_ERROR; }
-
-    server->describe_srv = (picoros_service_t){
-        .topic = {
-            .name = "describe_parameters",
-            .type = "rcl_interfaces::srv::dds_::DescribeParameters",
-            .rihs_hash = "845b484d71eb0673dae682f2e3ba3c4851a65a3dcfb97bddd82c5b57e91e4cff",
-        },
-        .user_callback = params_server_handler,
-        .user_data = &server->describe_srv,
-    };
-    if(picoros_service_declare(node, &server->describe_srv) != PICOROS_OK){ return PICOROS_ERROR; }
-
-    server->set_atomic_srv = (picoros_service_t){
-        .topic = {
-            .name = "set_parameters_atomically",
-            .type = "rcl_interfaces::srv::dds_::SetParametersAtomically",
-            .rihs_hash = "0e192ef259c07fc3c07a13191d27002222e65e00ccec653ca05e856f79285fcd",
-        },
-        .user_callback = params_server_handler,
-        .user_data = &server->set_atomic_srv,
-    };
-    if(picoros_service_declare(node, &server->set_atomic_srv) != PICOROS_OK){ return PICOROS_ERROR; }
-
-    server->get_types_srv = (picoros_service_t){
-        .topic = {
-            .name = "get_parameter_types",
-            .type = "rcl_interfaces::srv::dds_::GetParameterTypes",
-            .rihs_hash = "da199c878688b3e530bdfe3ca8f74cb9fa0c303101e980a9e8f260e25e1c80ca",
-        },
-        .user_callback = params_server_handler,
-        .user_data = &server->get_types_srv,
-    };
-    if(picoros_service_declare(node, &server->get_types_srv) != PICOROS_OK){ return PICOROS_ERROR; }
-
-    return PICOROS_OK;
-
 }
 
