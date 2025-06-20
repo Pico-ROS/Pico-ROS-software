@@ -214,7 +214,7 @@ static size_t get_params_value(picoparams_server_t* server, ucdrBuffer* reader, 
        void* param = server->interface.f_ref(target_params[i]);
        ros_ParameterValue val = {};
        if (param){
-           server->interface.f_get(param);
+           val = server->interface.f_get(param);
        }
        serialize_ros_ParameterValue(writer, &val);
     }
