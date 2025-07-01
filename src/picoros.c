@@ -28,14 +28,14 @@
 static z_owned_session_t s_wrapper;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
-static void rmw_zenoh_gen_attachment_gid(rmw_attachment_t* attachment){
+static void rmw_zenoh_gen_attachment_gid(rmw_attachment_t* attachment) {
     attachment->rmw_gid_size = RMW_GID_SIZE;
-    for (int i = 0; i < RMW_GID_SIZE; i++){
+    for (int i = 0; i < RMW_GID_SIZE; i++) {
         attachment->rmw_gid[i] = z_random_u8();
     }
 }
 
-static int rmw_zenoh_node_liveliness_keyexpr(picoros_node_t* node, char *keyexpr){
+static int rmw_zenoh_node_liveliness_keyexpr(picoros_node_t* node, char* keyexpr) {
 #if USE_NODE_GUID == 1
     uint8_t* guid = node->guid;
 #endif
@@ -62,12 +62,14 @@ static int rmw_zenoh_node_liveliness_keyexpr(picoros_node_t* node, char *keyexpr
            );
 }
 
-static int rmw_zenoh_topic_keyexpr(picoros_node_t* node, rmw_topic_t* topic, char *keyexpr){
-    return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s/%s_/RIHS01_%s", node->domain_id, topic->name, topic->type, topic->rihs_hash );
+static int rmw_zenoh_topic_keyexpr(picoros_node_t* node, rmw_topic_t* topic, char* keyexpr) {
+    return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s/%s_/RIHS01_%s", node->domain_id, topic->name, topic->type,
+                    topic->rihs_hash);
 }
 
-static int rmw_zenoh_service_keyexpr(picoros_node_t* node, rmw_topic_t* topic, char *keyexpr){
-    return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s/%s/%s_/RIHS01_%s", node->domain_id, node->name, topic->name, topic->type, topic->rihs_hash );
+static int rmw_zenoh_service_keyexpr(picoros_node_t* node, rmw_topic_t* topic, char* keyexpr) {
+    return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s/%s/%s_/RIHS01_%s", node->domain_id, node->name, topic->name,
+                    topic->type, topic->rihs_hash);
 }
 
 static int rmw_zenoh_topic_liveliness_keyexpr(picoros_node_t* node, rmw_topic_t* topic, char *keyexpr, const char *entity_str) {
@@ -154,41 +156,38 @@ static void srv_data_handler(z_loaned_query_t *query, void *arg) {
     _z_bytes_to_buf(b, rx_data, rx_data_len);
 
     // process
-    picoros_service_reply_t reply =
-        srv->user_callback(rx_data, rx_data_len, srv->user_data);
+    picoros_service_reply_t reply = srv->user_callback(rx_data, rx_data_len, srv->user_data);
 
-    if (reply.data){
+    if (reply.data) {
         // move reply to zbytes
         z_owned_bytes_t reply_payload;
         z_bytes_copy_from_buf(&reply_payload, reply.data, reply.length);
 
         // rmw attachment
-        srv->attachment.sequence_number=1;
+        srv->attachment.sequence_number = 1;
         srv->attachment.time = z_clock_now().tv_nsec;
         z_query_reply_options_t options;
         z_query_reply_options_default(&options);
         z_owned_bytes_t tx_attachment;
-        z_bytes_from_static_buf(&tx_attachment, (uint8_t *)&srv->attachment, sizeof(rmw_attachment_t));
+        z_bytes_from_static_buf(&tx_attachment, (uint8_t*)&srv->attachment, sizeof(rmw_attachment_t));
         options.attachment = z_bytes_move(&tx_attachment);
 
         // send reply
         z_result_t res = z_query_reply(query, z_query_keyexpr(query), z_bytes_move(&reply_payload), &options);
-        if (res != Z_OK){
+        if (res != Z_OK) {
             _PR_LOG("Error sending service reply. Error:%d\n", res);
         }
 
         // cleanup
         z_bytes_drop(z_bytes_move(&reply_payload));
-        if (reply.free_callback != NULL){
+        if (reply.free_callback != NULL) {
             reply.free_callback(reply.data);
         }
     }
     z_free(rx_data);
 }
 
-static void srv_drop_handler(void *arg) {
- _PR_LOG("Drop srv callback\n");
-}
+static void srv_drop_handler(void* arg) { _PR_LOG("Drop srv callback\n"); }
 
 /* Public functions ----------------------------------------------------------*/
 
@@ -216,7 +215,7 @@ picoros_res_t picoros_interface_init(picoros_interface_t* ifx) {
     _PR_LOG("Zenoh setup finished!\r\n");
 
     // Start read and lease tasks for zenoh-pico
-    if ((res = zp_start_read_task(z_session_loan_mut(&s_wrapper), NULL)) != Z_OK
+    if((res = zp_start_read_task(z_session_loan_mut(&s_wrapper), NULL)) != Z_OK
     || (res = zp_start_lease_task(z_session_loan_mut(&s_wrapper), NULL)) != Z_OK
     ){
         z_session_drop(z_session_move(&s_wrapper));
@@ -224,10 +223,10 @@ picoros_res_t picoros_interface_init(picoros_interface_t* ifx) {
         return PICOROS_ERROR;
     }
 
-	return PICOROS_OK;
+    return PICOROS_OK;
 }
 
-picoros_res_t picoros_node_init(picoros_node_t* node){
+picoros_res_t picoros_node_init(picoros_node_t* node) {
     z_result_t res = Z_OK;
     char keyexpr[KEYEXPR_SIZE];
 
@@ -239,69 +238,67 @@ picoros_res_t picoros_node_init(picoros_node_t* node){
     z_owned_liveliness_token_t token;
 
     if ((res = z_liveliness_declare_token(z_session_loan(&s_wrapper), &token, z_view_keyexpr_loan(&ke), NULL)) != Z_OK) {
-	   _PR_LOG("Unable to declare node liveliness token! Error:%d\n", res);
+        _PR_LOG("Unable to declare node liveliness token! Error:%d\n", res);
         return PICOROS_ERROR;
     }
-	return PICOROS_OK;
+    return PICOROS_OK;
 }
 
 void zenoh_shutdown() {
     z_session_drop(z_session_move(&s_wrapper));
 }
 
-picoros_res_t picoros_publisher_declare(picoros_node_t* node, picoros_publisher_t *pub) {
+picoros_res_t picoros_publisher_declare(picoros_node_t* node, picoros_publisher_t* pub) {
     z_view_keyexpr_t ke;
     z_result_t res = Z_OK;
     char keyexpr[KEYEXPR_SIZE];
-    if (pub->topic.type != NULL){
+    if (pub->topic.type != NULL) {
         rmw_zenoh_topic_keyexpr(node, &pub->topic, keyexpr);
         z_view_keyexpr_from_str_unchecked(&ke, keyexpr);
     }
-    else{
+    else {
         z_view_keyexpr_from_str_unchecked(&ke, pub->topic.name);
     }
+
     rmw_zenoh_gen_attachment_gid(&pub->attachment);
 
-    if ((res = z_declare_publisher(z_session_loan(&s_wrapper), &pub->zpub, z_view_keyexpr_loan(&ke), NULL)) != Z_OK){
+    if ((res = z_declare_publisher(z_session_loan(&s_wrapper), &pub->zpub, z_view_keyexpr_loan(&ke), NULL)) != Z_OK) {
         _PR_LOG("Unable to declare node liveliness token! Error:%d\n", res);
         return PICOROS_ERROR;
     }
 
-    if (pub->topic.type != NULL){
+    if (pub->topic.type != NULL) {
         z_view_keyexpr_t ke2;
         rmw_zenoh_topic_liveliness_keyexpr(node, &pub->topic, keyexpr, "MP");
         z_view_keyexpr_from_str(&ke2, keyexpr);
 
         z_owned_liveliness_token_t token;
         if ((res = z_liveliness_declare_token(z_session_loan(&s_wrapper), &token, z_view_keyexpr_loan(&ke2), NULL)) != Z_OK) {
-             _PR_LOG("Unable to declare publisher liveliness token! Error:%d\n", res);
+            _PR_LOG("Unable to declare publisher liveliness token! Error:%d\n", res);
             return PICOROS_ERROR;
         }
     }
     return PICOROS_OK;
 }
 
-
-
 // Publish to a topic
-picoros_res_t picoros_publish(picoros_publisher_t *pub, uint8_t *payload, size_t len) {
+picoros_res_t picoros_publish(picoros_publisher_t* pub, uint8_t* payload, size_t len) {
     z_result_t res = Z_OK;
     z_publisher_put_options_t options;
     z_publisher_put_options_default(&options);
 
-//    int64_t time_ns = tx_time_get()*1000000000ULL/TX_TIMER_TICKS_PER_SECOND;
     pub->attachment.sequence_number++;
     pub->attachment.time = z_clock_now().tv_nsec;
 
     z_owned_bytes_t z_attachment;
-    z_bytes_from_static_buf(&z_attachment, (uint8_t *)&pub->attachment, sizeof(rmw_attachment_t));
+    z_bytes_from_static_buf(&z_attachment, (uint8_t*)&pub->attachment, sizeof(rmw_attachment_t));
 
     options.attachment = z_bytes_move(&z_attachment);
 
     z_owned_bytes_t zbytes;
     z_bytes_from_static_buf(&zbytes, payload, len);
 
-    if ((res = z_publisher_put(z_publisher_loan(&pub->zpub), z_bytes_move(&zbytes), &options)) != Z_OK){
+    if ((res = z_publisher_put(z_publisher_loan(&pub->zpub), z_bytes_move(&zbytes), &options)) != Z_OK) {
         _PR_LOG("Unable to publish payload! Error:%d\n", res);
         return PICOROS_ERROR;
     }
@@ -309,28 +306,29 @@ picoros_res_t picoros_publish(picoros_publisher_t *pub, uint8_t *payload, size_t
 }
 
 // Subscribe to a topic
-picoros_res_t picoros_subscriber_declare(picoros_node_t* node, picoros_subscriber_t *sub) {
-	char keyexpr[KEYEXPR_SIZE];
-	z_view_keyexpr_t ke;
+picoros_res_t picoros_subscriber_declare(picoros_node_t* node, picoros_subscriber_t* sub) {
+    char keyexpr[KEYEXPR_SIZE];
+    z_view_keyexpr_t ke;
     z_result_t res = Z_OK;
-	if(sub->topic.type != NULL){
+    if (sub->topic.type != NULL) {
         rmw_zenoh_topic_keyexpr(node, &sub->topic, keyexpr);
         z_view_keyexpr_from_str_unchecked(&ke, keyexpr);
-	}
-	else{
+    }
+    else {
         z_view_keyexpr_from_str_unchecked(&ke, sub->topic.name);
-	}
+    }
 
-	z_owned_closure_sample_t callback;
+    z_owned_closure_sample_t callback;
     z_closure_sample(&callback, sub_data_handler, NULL, NULL);
-	callback._val.context = sub->user_callback;
+    callback._val.context = sub->user_callback;
 
-	if ((res = z_declare_subscriber(z_session_loan(&s_wrapper), &sub->zsub, z_view_keyexpr_loan(&ke), z_closure_sample_move(&callback), NULL)) != Z_OK) {
+    if ((res = z_declare_subscriber(z_session_loan(&s_wrapper), &sub->zsub, z_view_keyexpr_loan(&ke),
+                                    z_closure_sample_move(&callback), NULL)) != Z_OK) {
         _PR_LOG("Unable to declare subscriber! Error:%d\n", res);
         return PICOROS_ERROR;
-	}
+    }
 
-	if(sub->topic.type != NULL){
+    if (sub->topic.type != NULL) {
         rmw_zenoh_topic_liveliness_keyexpr(node, &sub->topic, keyexpr, "MS");
         z_view_keyexpr_from_str(&ke, keyexpr);
         z_owned_liveliness_token_t token;
@@ -338,50 +336,48 @@ picoros_res_t picoros_subscriber_declare(picoros_node_t* node, picoros_subscribe
             _PR_LOG("Unable to declare subscriber liveliness token! Error:%d\n", res);
             return PICOROS_ERROR;
         }
-	}
+    }
     return PICOROS_OK;
-
 }
 
-picoros_res_t picoros_service_declare(picoros_node_t* node, picoros_service_t* srv){
-   z_result_t res;
-   char keyexpr[KEYEXPR_SIZE];
+picoros_res_t picoros_service_declare(picoros_node_t* node, picoros_service_t* srv) {
+    z_result_t res;
+    char keyexpr[KEYEXPR_SIZE];
 
-   z_view_keyexpr_t ke;
-   if (srv->topic.type != NULL){
-       rmw_zenoh_service_keyexpr(node, &srv->topic, keyexpr);
-       z_view_keyexpr_from_str_unchecked(&ke, keyexpr);
-   }
-   else{
-       z_view_keyexpr_from_str_unchecked(&ke, srv->topic.name);
-   }
+    z_view_keyexpr_t ke;
+    if (srv->topic.type != NULL) {
+        rmw_zenoh_service_keyexpr(node, &srv->topic, keyexpr);
+        z_view_keyexpr_from_str_unchecked(&ke, keyexpr);
+    }
+    else {
+        z_view_keyexpr_from_str_unchecked(&ke, srv->topic.name);
+    }
 
-   rmw_zenoh_gen_attachment_gid(&srv->attachment);
+    rmw_zenoh_gen_attachment_gid(&srv->attachment);
 
-   z_queryable_options_t options = {};
-   options.complete = true;   //needed for rmw_zenoh
+    z_queryable_options_t options = {};
+    options.complete = true; // needed for rmw_zenoh
 
-   z_owned_closure_query_t callback;
-   z_closure_query(&callback, srv_data_handler, srv_drop_handler, srv);
-   if((res = z_declare_queryable(z_session_loan(&s_wrapper), &srv->zqable, z_view_keyexpr_loan(&ke), z_closure_query_move(&callback), &options)) != Z_OK){
+    z_owned_closure_query_t callback;
+    z_closure_query(&callback, srv_data_handler, srv_drop_handler, srv);
+    if ((res = z_declare_queryable(z_session_loan(&s_wrapper), &srv->zqable, z_view_keyexpr_loan(&ke),
+                                   z_closure_query_move(&callback), &options)) != Z_OK) {
         _PR_LOG("Unable to declare service! Error:%d\n", res);
         return PICOROS_ERROR;
-   }
-   if (srv->topic.type != NULL){
-       z_view_keyexpr_t ke2;
-       z_owned_liveliness_token_t token;
-       rmw_zenoh_topic_liveliness_keyexpr(node, &srv->topic, keyexpr, "SS");
-       z_view_keyexpr_from_str(&ke2, keyexpr);
-       if ((res = z_liveliness_declare_token(z_session_loan(&s_wrapper), &token, z_view_keyexpr_loan(&ke2), NULL)) != Z_OK) {
-         _PR_LOG("Unable to declare service liveliness token! Error:%d\n", res);
-         return PICOROS_ERROR;
-       }
-   }
-   return PICOROS_OK;
+    }
+    if (srv->topic.type != NULL) {
+        z_view_keyexpr_t ke2;
+        z_owned_liveliness_token_t token;
+        rmw_zenoh_topic_liveliness_keyexpr(node, &srv->topic, keyexpr, "SS");
+        z_view_keyexpr_from_str(&ke2, keyexpr);
+        if ((res = z_liveliness_declare_token(z_session_loan(&s_wrapper), &token, z_view_keyexpr_loan(&ke2), NULL)) != Z_OK) {
+            _PR_LOG("Unable to declare service liveliness token! Error:%d\n", res);
+            return PICOROS_ERROR;
+        }
+    }
+    return PICOROS_OK;
 }
 
-
-
-picoros_res_t picoros_unsubscribe(picoros_subscriber_t *sub) {
-	return (z_undeclare_subscriber(z_subscriber_move(&sub->zsub)) == Z_OK) ? PICOROS_OK : PICOROS_ERROR;
+picoros_res_t picoros_unsubscribe(picoros_subscriber_t* sub) {
+    return (z_undeclare_subscriber(z_subscriber_move(&sub->zsub)) == Z_OK) ? PICOROS_OK : PICOROS_ERROR;
 }
