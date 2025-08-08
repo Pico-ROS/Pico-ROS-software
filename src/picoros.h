@@ -14,6 +14,8 @@
 #ifndef PICO_ROS_H_
 #define PICO_ROS_H_
 
+#include "zenoh-pico.h"
+
 #ifdef __cplusplus
  extern "C" {
 #endif
@@ -27,7 +29,6 @@
 
 /* Exported includes ---------------------------------------------------------*/
 #include <stdint.h>
-#include "zenoh-pico.h"
 
 /* Exported constants --------------------------------------------------------*/
 /** @brief Maximum size for key expressions used in topic names @ingroup picoros */
@@ -59,9 +60,9 @@ typedef struct __attribute__((__packed__)) {
  * @brief RMW topic structure required by rmw_zenoh
  */
 typedef struct {
-    char* name;                     /**< Topic name */
-    char* type;                     /**< Message type */
-    char* rihs_hash;                /**< RIHS hash */
+    const char* name;                     /**< Topic name */
+    const char* type;                     /**< Message type */
+    const char* rihs_hash;                /**< RIHS hash */
 } rmw_topic_t;
 
 /** @} */
@@ -156,9 +157,9 @@ typedef struct {
  * @brief Node configuration structure
  */
 typedef struct {
-    char*    name;                  /**< Node name */
-    uint32_t domain_id;             /**< ROS domain ID */
-    uint8_t  guid[RMW_GID_SIZE];    /**< Node GUID */
+    const char* name;                  /**< Node name */
+    uint32_t    domain_id;             /**< ROS domain ID */
+    uint8_t     guid[RMW_GID_SIZE];    /**< Node GUID */
 } picoros_node_t;
 
 /** @} */

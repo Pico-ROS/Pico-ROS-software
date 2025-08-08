@@ -413,6 +413,82 @@ void ucdr_seq_end(ucdr_writer_t* writer);
 
 #ifdef __cplusplus
 }
+
+#undef ps_deserialize
+#undef ps_serialize
+
+/**
+ * @defgroup generic_serdes_macros Generic serdes c++ overrides
+ * @ingroup picoserdes
+ * @{
+ */
+
+// Template overload generation macros
+#define PS_CPP_SER_OVERLOAD(TYPE, ...)                                     \
+    inline size_t ps_serialize(uint8_t* pBUF, TYPE* pMSG, size_t MAX) {    \
+        ucdrBuffer writer = {};                                             \
+        *((uint32_t*)pBUF) = 0x0100; /* Little endian header */            \
+        ucdr_init_buffer(&writer, pBUF + 4, MAX - 4);                      \
+        ps_ser_##TYPE(&writer, pMSG);                                       \
+        return ucdr_buffer_length(&writer) + 4;                             \
+    }
+
+#define PS_CPP_DES_OVERLOAD(TYPE, ...)                                     \
+    inline bool ps_deserialize(uint8_t* pBUF, TYPE* pMSG, size_t MAX) {    \
+        ucdrBuffer reader = {};                                             \
+        ucdr_init_buffer(&reader, pBUF + sizeof(uint32_t),                  \
+                        MAX - sizeof(uint32_t));                            \
+        return ps_des_##TYPE(&reader, pMSG);                                \
+    }
+
+
+// Generate C++ overloads for all message types
+MSG_LIST(PS_CPP_SER_OVERLOAD, PS_CPP_SER_OVERLOAD, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+MSG_LIST(PS_CPP_DES_OVERLOAD, PS_CPP_DES_OVERLOAD, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+
+// Generate C++ overloads for service request/reply types
+#define PS_CPP_SRV_SER_OVERLOAD(TYPE, NAME, HASH, ...)                     \
+    inline size_t ps_serialize(uint8_t* pBUF, request_##TYPE* pMSG, size_t MAX) { \
+        ucdrBuffer writer = {};                                             \
+        *((uint32_t*)pBUF) = 0x0100;                                        \
+        ucdr_init_buffer(&writer, pBUF + 4, MAX - 4);                      \
+        ps_ser_##TYPE##_request(&writer, pMSG);                             \
+        return ucdr_buffer_length(&writer) + 4;                             \
+    }                                                                       \
+    inline size_t ps_serialize(uint8_t* pBUF, reply_##TYPE* pMSG, size_t MAX) { \
+        ucdrBuffer writer = {};                                             \
+        *((uint32_t*)pBUF) = 0x0100;                                        \
+        ucdr_init_buffer(&writer, pBUF + 4, MAX - 4);                      \
+        ps_ser_##TYPE##_reply(&writer, pMSG);                               \
+        return ucdr_buffer_length(&writer) + 4;                             \
+    }
+
+#define PS_CPP_SRV_DES_OVERLOAD(TYPE, NAME, HASH, ...)                     \
+    inline bool ps_deserialize(uint8_t* pBUF, request_##TYPE* pMSG, size_t MAX) { \
+        ucdrBuffer reader = {};                                             \
+        ucdr_init_buffer(&reader, pBUF + sizeof(uint32_t),                  \
+                        MAX - sizeof(uint32_t));                            \
+        return ps_des_##TYPE##_request(&reader, pMSG);                      \
+    }                                                                       \
+    inline bool ps_deserialize(uint8_t* pBUF, reply_##TYPE* pMSG, size_t MAX) { \
+        ucdrBuffer reader = {};                                             \
+        ucdr_init_buffer(&reader, pBUF + sizeof(uint32_t),                  \
+                        MAX - sizeof(uint32_t));                            \
+        return ps_des_##TYPE##_reply(&reader, pMSG);                        \
+    }
+
+// Generate C++ overloads for all service types
+SRV_LIST(PS_CPP_SRV_SER_OVERLOAD, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+SRV_LIST(PS_CPP_SRV_DES_OVERLOAD, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+
+/** @} */
+
+// Clean up the template macros
+#undef PS_CPP_SER_OVERLOAD
+#undef PS_CPP_DES_OVERLOAD
+#undef PS_CPP_SRV_SER_OVERLOAD
+#undef PS_CPP_SRV_DES_OVERLOAD
+
 #endif
 
 #endif /* PICOSERDES_H */

@@ -5,13 +5,14 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/version.txt version)
-project(pico-ros VERSION ${version} LANGUAGES C)
+project(pico-ros VERSION ${version})
 
 option(PICOROS_BUILD_EXAMPLES "Build examples" ON)
 option(PICOROS_BUILD_TESTS "Build tests" ON)
 message("PICOROS_BUILD_EXAMPLES: ${PICOROS_BUILD_EXAMPLES}")
 
 set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 if(CMAKE_EXPORT_COMPILE_COMMANDS)
@@ -110,6 +111,10 @@ if(PICOROS_BUILD_EXAMPLES)
   add_executable(talker examples/talker.c  ${EXAMPLE_SRC})
   target_include_directories(talker PUBLIC ${EXAMPLE_INCLUDE})
   target_link_libraries(talker PRIVATE  ${EXAMPLE_LIBS})
+
+  add_executable(talkerpp examples/talker.cpp  ${EXAMPLE_SRC})
+  target_include_directories(talkerpp PUBLIC ${EXAMPLE_INCLUDE})
+  target_link_libraries(talkerpp PRIVATE  ${EXAMPLE_LIBS})
 
   add_executable(listener examples/listener.c  ${EXAMPLE_SRC})
   target_include_directories(listener PUBLIC ${EXAMPLE_INCLUDE})
