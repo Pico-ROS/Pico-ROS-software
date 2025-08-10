@@ -89,7 +89,7 @@
         "geometry_msgs::msg::dds_::Twist",      \
         "9c45bf16fe0983d80e3cfe750d6835843d265a9a6c46bd2e609fcddde6fb8d2a", \
         FIELD(ros_Vector3, linear)              \
-        FIELD(ros_Vector3, angulat)             \
+        FIELD(ros_Vector3, angular)             \
     )                                           \
     CTYPE(ros_PoseWithCovariance,               \
         "geometry_msgs::msg::dds_::PoseWithCovariance", \
