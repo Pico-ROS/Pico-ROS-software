@@ -1,0 +1,10 @@
+# Core dependency for rosidl_parser (python3-lark-parser)
+lark>=1.0.0
+
+# Dependencies for rosidl_cli (from package.xml)
+argcomplete>=1.0.0
+importlib-metadata>=1.0.0
+
+# Dependencies for rosidl_adapter (for .msg/.srv to .idl conversion)
+empy>=3.0.0
+catkin-pkg>=0.4.0

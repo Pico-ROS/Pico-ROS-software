@@ -1,3 +1,5 @@
 build/
 .cache/
 docs/generated/
+**/venv/
+**/__pycache__/

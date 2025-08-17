@@ -53,7 +53,7 @@ typedef enum {
     PARAMETER_INTEGER_ARRAY,  /**< Integer array parameter */
     PARAMETER_DOUBLE_ARRAY,   /**< Double array parameter */
     PARAMETER_STRING_ARRAY,   /**< String array parameter */
-} ros_ParameterType;
+} pp_ParameterType;
 
 /**
  * @brief Floating point range descriptor for parameters
@@ -62,7 +62,7 @@ typedef struct {
     double min;   /**< Minimum allowed value */
     double max;   /**< Maximum allowed value */
     double step;  /**< Step size for value changes */
-} ros_FloatingPointRange;
+} pp_FloatingPointRange;
 
 /**
  * @brief Integer range descriptor for parameters
@@ -71,7 +71,7 @@ typedef struct {
     int64_t min;   /**< Minimum allowed value */
     int64_t max;   /**< Maximum allowed value */
     int64_t step;  /**< Step size for value changes */
-} ros_IntegerRange;
+} pp_IntegerRange;
 
 /**
  * @brief Parameter value container
@@ -96,31 +96,31 @@ typedef struct {
      */
     void (*write_data_n)(ucdrBuffer* writer, void* user_data, uint32_t n);
     void* user_data;  /**< User data for write_data_n callback */
-} ros_ParameterValue;
+} pp_ParameterValue;
 
 /**
  * @brief ROS parameter with name and value
  */
 typedef struct {
     char* name;              /**< Parameter name */
-    ros_ParameterValue value; /**< Parameter value */
-} ros_Parameter;
+    pp_ParameterValue value; /**< Parameter value */
+} pp_Parameter;
 
 /**
  * @brief Parameter descriptor containing metadata
  */
 typedef struct {
     char* name;                    /**< Parameter name */
-    ros_ParameterType type:8;      /**< Parameter type */
+    pp_ParameterType type:8;      /**< Parameter type */
     char* description;             /**< Parameter description */
     char* additional_constraints;  /**< Additional constraints as string */
     bool read_only;                /**< Whether parameter is read-only */
     bool dynamic_typing;           /**< Whether parameter type can change */
     union {
-        ros_FloatingPointRange float_range; /**< Floating point range constraints */
-        ros_IntegerRange int_range;         /**< Integer range constraints */
+        pp_FloatingPointRange float_range; /**< Floating point range constraints */
+        pp_IntegerRange int_range;         /**< Integer range constraints */
     };
-} ros_ParameterDescriptor;
+} pp_ParameterDescriptor;
 
 /** @} */
 
@@ -143,21 +143,21 @@ typedef void* (*f_param_ref)(char* name);
  * @param param Parameter reference
  * @return Parameter descriptor
  */
-typedef ros_ParameterDescriptor (*f_param_describe)(void* param);
+typedef pp_ParameterDescriptor (*f_param_describe)(void* param);
 
 /**
  * @brief Function to get parameter value
  * @param param Parameter reference
  * @return Parameter value
  */
-typedef ros_ParameterValue (*f_param_get)(void* param);
+typedef pp_ParameterValue (*f_param_get)(void* param);
 
 /**
  * @brief Function to get parameter type
  * @param param Parameter reference
  * @return Parameter type
  */
-typedef ros_ParameterType (*f_param_type)(void* param);
+typedef pp_ParameterType (*f_param_type)(void* param);
 
 /**
  * @brief Function to set parameter value
@@ -166,7 +166,7 @@ typedef ros_ParameterType (*f_param_type)(void* param);
  * @param error_msg Error message if set fails
  * @return true if set successful, false otherwise
  */
-typedef bool (*f_param_set)(void* param, ros_ParameterValue* value, char** error_msg);
+typedef bool (*f_param_set)(void* param, pp_ParameterValue* value, char** error_msg);
 
 /**
  * @brief Function to list parameters at a prefix

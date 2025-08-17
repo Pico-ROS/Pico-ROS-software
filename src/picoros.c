@@ -19,7 +19,11 @@
 #include "zenoh-pico/system/common/platform.h"
 #include "zenoh-pico/utils/result.h"
 
-#define _PR_LOG(...) printf(__VA_ARGS__)
+#ifdef PICOROS_DEBUG
+    #define _PR_LOG(...) printf(__VA_ARGS__)
+#else
+    #define _PR_LOG(...)
+#endif
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/

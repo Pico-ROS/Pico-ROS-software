@@ -43,8 +43,8 @@ void publish_odometry(){
     ros_Odometry odom = {
         .header = {
             .frame_id = "odom",
-            .time.nsec = clk.tv_nsec,
-            .time.sec = clk.tv_sec,
+            .stamp.nanosec = clk.tv_nsec,
+            .stamp.sec = clk.tv_sec,
         },
         .child_frame_id = "base-link",
     };
