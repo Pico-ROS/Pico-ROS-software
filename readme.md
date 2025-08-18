@@ -51,12 +51,13 @@
 
 The project includes several example applications demonstrating different features:
 
-  - `talker.c`: Basic publisher example
+  - `talker.c` & `talker.cpp`: Basic publisher example
   - `listener.c`: Basic subscriber example
   - `srv_add2ints.c`: Service server example
   - `params_server.c`: Parameter server implementation
   - `odometry_publisher.c` & `odometry_listener.c`: ROS odometry message handling
   - `batteryState_publisher.c` BatteryState message with sequence fields.
+  - `jointState_publisher.cpp` JointState message with sequence fields in cpp.
 
 #### Running the Examples
 

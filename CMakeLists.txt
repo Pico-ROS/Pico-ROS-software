@@ -118,6 +118,10 @@ if (TYPE_FILE)
   target_include_directories(talkerpp PUBLIC ${EXAMPLE_INCLUDE})
   target_link_libraries(talkerpp PRIVATE  ${EXAMPLE_LIBS})
 
+  add_executable(jointState_publisherpp examples/jointState_publisher.cpp  ${EXAMPLE_SRC})
+  target_include_directories(jointState_publisherpp PUBLIC ${EXAMPLE_INCLUDE})
+  target_link_libraries(jointState_publisherpp PRIVATE  ${EXAMPLE_LIBS})
+
   add_executable(listener examples/listener.c  ${EXAMPLE_SRC})
   target_include_directories(listener PUBLIC ${EXAMPLE_INCLUDE})
   target_link_libraries(listener PRIVATE  ${EXAMPLE_LIBS})
