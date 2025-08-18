@@ -56,16 +56,15 @@ void print_test_result(const char* type_name, bool passed) {
  */
 #define TEST_TYPE(type, ...) \
     do { \
-        uint8_t buffer[TEST_BUFFER_SIZE]; \
-        uint8_t buffer2[TEST_BUFFER_SIZE]; \
+        uint8_t buffer[TEST_BUFFER_SIZE] = {}; \
+        uint8_t buffer2[TEST_BUFFER_SIZE] = {}; \
         type* original = &test_##type; \
-        type deserialized; \
         /* Serialize */ \
         size_t len = _ps_serialize(buffer, original, TEST_BUFFER_SIZE); \
         /* Deserialize */ \
-        _ps_deserialize(buffer, &deserialized, TEST_BUFFER_SIZE); \
+        _ps_deserialize(buffer, &deserialized_##type, TEST_BUFFER_SIZE); \
         /* Serialize deserialized */ \
-        _ps_serialize(buffer2, &deserialized, TEST_BUFFER_SIZE); \
+        _ps_serialize(buffer2, &deserialized_##type, TEST_BUFFER_SIZE); \
         /* Compare serialized buffers and print result */ \
         bool test_passed = (memcmp(buffer, buffer2, len) == 0); \
         print_test_result(#type, test_passed); \
@@ -81,13 +80,17 @@ void print_test_result(const char* type_name, bool passed) {
                 printf("%02x ", buffer2[i]); \
                 if((i+1)%32 == 0){printf("\n");}\
             }\
-            printf("\n\n"); \
+            printf("\n\n");\
         } \
     } while (0);
 
-/* Helper macros for constant values generation */
+/* Helper macros for test values generation */
+#define MAKE_TEST_SEQUENCE_DATA(TYPE, ...) \
+    TYPE##_sequence test_sequence_##TYPE = {.data = &test_##TYPE, .n_elements = 1};
+
 #define MAKE_TEST_BTYPE(TYPE, NAME, HASH, TYPE2, ...)  \
-    TYPE test_##TYPE = test_##TYPE2;
+    TYPE test_##TYPE = test_##TYPE2; \
+    MAKE_TEST_SEQUENCE_DATA(TYPE)
 
 #define MAKE_TEST_FIELD(TYPE, NAME) \
     .NAME = test_##TYPE,
@@ -95,14 +98,42 @@ void print_test_result(const char* type_name, bool passed) {
 #define MAKE_TEST_ARRAY(TYPE, NAME, SIZE) \
     .NAME = {1, 2},
 
+#define MAKE_TEST_SEQUENCE(TYPE, NAME) \
+    .NAME = test_sequence_##TYPE,
+
 #define MAKE_TEST_CTYPE(TYPE, NAME, HASH, ...)  \
-    TYPE test_##TYPE = {  __VA_ARGS__ };
+    TYPE test_##TYPE = {  __VA_ARGS__ };        \
+    MAKE_TEST_SEQUENCE_DATA(TYPE)
+
+/* Helper macros for deserialization buffers generation */
+#define MAKE_TEST_SEQUENCE_DATA_BUF(TYPE, ...) \
+    TYPE##_sequence deserialized_sequence_##TYPE = {.data = &deserialized_##TYPE, .n_elements = 1};
+
+#define MAKE_TEST_SEQUENCE_BUF(TYPE, NAME)          \
+    .NAME = deserialized_sequence_##TYPE,
+
+#define MAKE_TEST_FIELD_BUF(TYPE, NAME) \
+    .NAME = deserialized_##TYPE,
+
+#define MAKE_TEST_CTYPE_BUF(TYPE, NAME, HASH, ...)  \
+    TYPE deserialized_##TYPE = {  __VA_ARGS__ }; \
+    MAKE_TEST_SEQUENCE_DATA_BUF(TYPE)
+
+#define MAKE_TEST_BTYPE_BUF(TYPE, NAME, HASH, TYPE2)   \
+    TYPE deserialized_##TYPE = deserialized_##TYPE2;   \
+    MAKE_TEST_SEQUENCE_DATA_BUF(TYPE)
+
+#define MAKE_TEST_BASE_BUF(TYPE)                    \
+    TYPE deserialized_##TYPE = 0;
 
 
+/* Helper macros for service test generation */
 #define MAKE_SRV_TEST(TYPE, NAME, HASH, REQ, REP) \
     request_##TYPE test_request_##TYPE = {  REQ }; \
     reply_##TYPE test_reply_##TYPE = {  REP };
-
+#define MAKE_SRV_TEST_BUF(TYPE, NAME, HASH, REQ, REP) \
+    request_##TYPE deserialized_request_##TYPE = {  REQ }; \
+    reply_##TYPE deserialized_reply_##TYPE = {  REP };
 #define TEST_SRV(TYPE, ...) \
     TEST_TYPE(request_##TYPE) \
     TEST_TYPE(reply_##TYPE)
@@ -126,19 +157,27 @@ int main() {
     float test_float= 0.5f;
     double test_double = 0.12345;
     char* test_rstring = "This is a test string";
-
+    
     // Input data - user types - link base types above
-    MSG_LIST_EXPAND(MAKE_TEST_BTYPE, MAKE_TEST_CTYPE, MAKE_TEST_BTYPE, MAKE_TEST_FIELD, MAKE_TEST_ARRAY)
-    SRV_LIST_EXPAND(MAKE_SRV_TEST, PS_EXPAND, PS_EXPAND, MAKE_TEST_FIELD, MAKE_TEST_ARRAY)
-
+    BASE_TYPES_LIST_EXPAND(MAKE_TEST_SEQUENCE_DATA)
+    MSG_LIST_EXPAND(MAKE_TEST_BTYPE, MAKE_TEST_CTYPE, MAKE_TEST_BTYPE, MAKE_TEST_FIELD, MAKE_TEST_ARRAY, MAKE_TEST_SEQUENCE)
+    SRV_LIST_EXPAND(MAKE_SRV_TEST, PS_EXPAND, PS_EXPAND, MAKE_TEST_FIELD, MAKE_TEST_ARRAY, MAKE_TEST_SEQUENCE)
+    
+    // Serialization buffers
+    BASE_TYPES_LIST_EXPAND(MAKE_TEST_BASE_BUF)
+    BASE_TYPES_LIST_EXPAND(MAKE_TEST_SEQUENCE_DATA_BUF)
+    MSG_LIST_EXPAND(MAKE_TEST_BTYPE_BUF, MAKE_TEST_CTYPE_BUF, MAKE_TEST_BTYPE_BUF, MAKE_TEST_FIELD_BUF, PS_UNUSED, MAKE_TEST_SEQUENCE_BUF)
+    SRV_LIST_EXPAND(MAKE_SRV_TEST_BUF, PS_EXPAND, PS_EXPAND, MAKE_TEST_FIELD_BUF, PS_UNUSED, MAKE_TEST_SEQUENCE_BUF)
+    
+    
     print_header("Base Types Tests:");
     BASE_TYPES_LIST_EXPAND(TEST_TYPE)
 
     print_header("Message Types Tests:");
-    MSG_LIST_EXPAND(PS_UNUSED, TEST_TYPE, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+    MSG_LIST_EXPAND(PS_UNUSED, TEST_TYPE, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
 
     print_header("Service Types Tests:");
-    SRV_LIST_EXPAND(TEST_SRV, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+    SRV_LIST_EXPAND(TEST_SRV, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
 
     if(some_test_failed){
         printf("\n%s%s Some tests failed! %s\n\n",

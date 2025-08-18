@@ -130,6 +130,10 @@ if (TYPE_FILE)
   target_include_directories(odometry_publisher PUBLIC ${EXAMPLE_INCLUDE})
   target_link_libraries(odometry_publisher PRIVATE  ${EXAMPLE_LIBS})
 
+  add_executable(batteryState_publisher examples/batteryState_publisher.c  ${EXAMPLE_SRC})
+  target_include_directories(batteryState_publisher PUBLIC ${EXAMPLE_INCLUDE})
+  target_link_libraries(batteryState_publisher PRIVATE  ${EXAMPLE_LIBS})
+
   add_executable(params_server examples/params_server.c  ${EXAMPLE_SRC})
   target_include_directories(params_server PUBLIC ${EXAMPLE_INCLUDE})
   target_link_libraries(params_server PRIVATE  ${EXAMPLE_LIBS})

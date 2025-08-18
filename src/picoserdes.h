@@ -50,6 +50,7 @@
  * CTYPE = Compound type - more members, implemented as struct. FUNC(name, rmw_name, rmw_hash, <fields...>)
  *      FIELD = Field of coumpound type FUNC(type, name)
  *      ARRAY = Array field of coumpound type FUNC(type, name, size)
+ *      SEQUENCE = Sequence field of compound type FUNC(type, name)
  *
  * Each entry in table must have the following format
  * TYPE(                 \  // Can be BTYPE, CTYPE, TTYPE
@@ -58,11 +59,11 @@
  *      rmw_hash,        \  // Type hash string used in RMS
  *      <fields ...>     \  // BTYPE - 1 item - aliased type
  * )                     \  // CTYPE - 1 or more items (struct members) each
- *                          //         wrapped in FIELD() or ARRAY() with no commas between them.
+ *                          //         wrapped in FIELD() , ARRAY() or SEQUENCE() with no commas between them.
  * note: New lines need to be escaped with \
  * \endverbatim
  */
-    #define MSG_LIST(BTYPE, CTYPE, TTYPE, FIELD, ARRAY)
+    #define MSG_LIST(BTYPE, CTYPE, TTYPE, FIELD, ARRAY, SEQUENCE)
 /**
  * @brief Service type list macro
  * @details
@@ -72,6 +73,7 @@
  *      REQUEST / REPLY = Request/reply type, implemented as struct. FUNC(<fields...>)
  *          FIELD = Field of request/reply member. FUNC(type, name)
  *          ARRAY = Array field of request/reply member. FUNC(type, name, size)
+ *          SEQUENCE = Sequence field of request/reply member. FUNC(type, name). 
  *
  * Each entry in table must have the following format
  * SRV(                  \
@@ -89,7 +91,7 @@
  *       Name of generated request/reply types is request_<srv_name> and reply_<srv_name>
  * \endverbatim
  */
-    #define SRV_LIST(SRV, REQUEST, REPLY, FIELD, ARRAY)
+    #define SRV_LIST(SRV, REQUEST, REPLY, FIELD, ARRAY, SEQUENCE)
 #else
     // user needs to provide MSG_LIST and SRV_LIST macros
     #include USER_TYPE_FILE
@@ -134,11 +136,22 @@ typedef char* rstring;
 #define CAT(x, y) x##y
 #define FIELD_EXPAND(TYPE, NAME) TYPE NAME;
 #define ARRAY_EXPAND(TYPE, NAME, SIZE) TYPE NAME[SIZE];
-#define BTYPE_DECLARE(TYPE, NAME, HASH, TYPE2, ...) typedef TYPE2 TYPE;
+#define SEQUENCE_EXPAND(TYPE, NAME, ...) TYPE##_sequence NAME;
+#define SEQUENCE_DECLARE(TYPE, ...)             \
+    typedef struct{                             \
+        TYPE* data;                             \
+        uint32_t n_elements;                    \
+    }TYPE##_sequence;
+#define BTYPE_DECLARE(TYPE, NAME, HASH, TYPE2, ...) \
+    typedef TYPE2 TYPE; \
+    SEQUENCE_DECLARE(TYPE)
+
 #define CTYPE_DECLARE(TYPE, NAME, HASH, ...)    \
     typedef struct {                            \
         __VA_ARGS__                             \
-    }TYPE;
+    }TYPE;\
+     SEQUENCE_DECLARE(TYPE)
+
 #define SRV_DECLARE(TYPE, NAME, HASH, REQ, REP) CAT(REQ, TYPE); CAT(REP,TYPE);
 #define REQUEST_DECLARE(...)                    \
     typedef struct {                            \
@@ -155,8 +168,10 @@ typedef char* rstring;
  * @ingroup picoserdes
  * @{
  */
-MSG_LIST(BTYPE_DECLARE, CTYPE_DECLARE, BTYPE_DECLARE, FIELD_EXPAND, ARRAY_EXPAND)
-SRV_LIST(SRV_DECLARE, REQUEST_DECLARE, REPLY_DECLARE, FIELD_EXPAND, ARRAY_EXPAND)
+ BASE_TYPES_LIST(SEQUENCE_DECLARE)
+ MSG_LIST(BTYPE_DECLARE, CTYPE_DECLARE, BTYPE_DECLARE, FIELD_EXPAND, ARRAY_EXPAND, SEQUENCE_EXPAND)
+ SRV_LIST(SRV_DECLARE, REQUEST_DECLARE, REPLY_DECLARE, FIELD_EXPAND, ARRAY_EXPAND, SEQUENCE_EXPAND)
+ 
 /** @} */
 #undef CAT
 #undef FIELD_EXPAND
@@ -189,8 +204,8 @@ typedef struct {
  * @brief Type name constants
  * @{
  */
-MSG_LIST(TYPE_NAME, TYPE_NAME, TYPE_NAME, PS_UNUSED, PS_UNUSED)
-SRV_LIST(TYPE_NAME, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+MSG_LIST(TYPE_NAME, TYPE_NAME, TYPE_NAME, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+SRV_LIST(TYPE_NAME, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED,PS_UNUSED)
 /** @} */
 #undef TYPE_NAME
 
@@ -199,8 +214,8 @@ SRV_LIST(TYPE_NAME, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
  * @brief Type hash constants
  * @{
  */
-MSG_LIST(TYPE_HASH, TYPE_HASH, TYPE_HASH, PS_UNUSED, PS_UNUSED)
-SRV_LIST(TYPE_HASH, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+MSG_LIST(TYPE_HASH, TYPE_HASH, TYPE_HASH, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+SRV_LIST(TYPE_HASH, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
 /** @} */
 #undef TYPE_HASH
 
@@ -218,7 +233,8 @@ SRV_LIST(TYPE_HASH, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
 
 /* Generate serialization function declarations */
 #define PS_SER_FUNC_DEF(TYPE, ...)                                          \
-    bool ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg);
+    bool ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg);                      \
+    bool ps_ser_sequence_##TYPE(ucdrBuffer* writer, TYPE##_sequence* msg);
 #define PS_SER_SRV_FUNC_DEF(TYPE, ...)                                      \
     bool ps_ser_##TYPE##_request(ucdrBuffer* writer, request_##TYPE* msg);  \
     bool ps_ser_##TYPE##_reply(ucdrBuffer* writer, reply_##TYPE* msg);
@@ -227,8 +243,8 @@ SRV_LIST(TYPE_HASH, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
  * @ingroup picoserdes
  * @{
  */
-MSG_LIST(PS_SER_FUNC_DEF, PS_SER_FUNC_DEF, PS_SER_FUNC_DEF, PS_UNUSED, PS_UNUSED)
-SRV_LIST(PS_SER_SRV_FUNC_DEF, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+MSG_LIST(PS_SER_FUNC_DEF, PS_SER_FUNC_DEF, PS_SER_FUNC_DEF, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+SRV_LIST(PS_SER_SRV_FUNC_DEF, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
 BASE_TYPES_LIST(PS_SER_FUNC_DEF)
 /** @} */
 #undef PS_SER_FUNC_DEF
@@ -237,7 +253,8 @@ BASE_TYPES_LIST(PS_SER_FUNC_DEF)
 
 /* Generate deserialization function declarations */
 #define PS_DES_FUNC_DEF(TYPE, ...)                                          \
-    bool ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg);
+    bool ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg);                      \
+    bool ps_des_sequence_##TYPE(ucdrBuffer* reader, TYPE##_sequence* msg);
 #define PS_DES_SRV_FUNC_DEF(TYPE, ...)                                      \
     bool ps_des_##TYPE##_request(ucdrBuffer* writer, request_##TYPE* msg);  \
     bool ps_des_##TYPE##_reply(ucdrBuffer* writer, reply_##TYPE* msg);
@@ -246,8 +263,8 @@ BASE_TYPES_LIST(PS_SER_FUNC_DEF)
  * @ingroup picoserdes
  * @{
  */
-MSG_LIST(PS_DES_FUNC_DEF, PS_DES_FUNC_DEF, PS_DES_FUNC_DEF, PS_UNUSED, PS_UNUSED)
-SRV_LIST(PS_DES_SRV_FUNC_DEF, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+MSG_LIST(PS_DES_FUNC_DEF, PS_DES_FUNC_DEF, PS_DES_FUNC_DEF, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+SRV_LIST(PS_DES_SRV_FUNC_DEF, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
 BASE_TYPES_LIST(PS_DES_FUNC_DEF)
 /** @} */
 #undef PS_DES_FUNC_DEF
@@ -258,8 +275,12 @@ BASE_TYPES_LIST(PS_DES_FUNC_DEF)
  * @brief Generic serdes macros helpers
  * @{
  */
-#define PS_SEL_SER(TYPE, ...)  TYPE*: ps_ser_##TYPE,
-#define PS_SEL_DES(TYPE, ...)  TYPE*: ps_des_##TYPE,
+#define PS_SEL_SER(TYPE, ...)                           \
+            TYPE*: ps_ser_##TYPE,                       \
+            TYPE##_sequence*: ps_ser_sequence_##TYPE,
+#define PS_SEL_DES(TYPE, ...)                           \
+            TYPE*: ps_des_##TYPE,                       \
+            TYPE##_sequence*: ps_des_sequence_##TYPE,
 #define PS_SEL_SRV_SER(TYPE, ...)                       \
             request_##TYPE*: ps_ser_##TYPE##_request,   \
             reply_##TYPE*: ps_ser_##TYPE##_reply,
@@ -305,8 +326,8 @@ BASE_TYPES_LIST(PS_DES_FUNC_DEF)
         ucdr_init_buffer(&writer, pBUF+4, MAX-4);                                                   \
         _Generic((pMSG),                                                                            \
             PS_DEFER(BASE_TYPES_LIST_INDIRECT)(PS_SEL_SER)                                          \
-            PS_DEFER(MSG_LIST_INDIRECT)(PS_UNUSED, PS_SEL_SER, PS_UNUSED, PS_UNUSED, PS_UNUSED)     \
-            PS_DEFER(SRV_LIST_INDIRECT)(PS_SEL_SRV_SER, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED) \
+            PS_DEFER(MSG_LIST_INDIRECT)(PS_UNUSED, PS_SEL_SER, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)     \
+            PS_DEFER(SRV_LIST_INDIRECT)(PS_SEL_SRV_SER, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED) \
             default: 0                                                                              \
         )(&writer, pMSG);                                                                           \
         size_t _ret = ucdr_buffer_length(&writer) + 4;                                              \
@@ -326,8 +347,8 @@ BASE_TYPES_LIST(PS_DES_FUNC_DEF)
         ucdr_init_buffer(&reader, pBUF + sizeof(uint32_t), MAX - sizeof(uint32_t));                 \
         bool _ok = _Generic((pMSG),                                                                 \
             PS_DEFER(BASE_TYPES_LIST_INDIRECT)(PS_SEL_DES)                                          \
-            PS_DEFER(MSG_LIST_INDIRECT)(PS_UNUSED, PS_SEL_DES, PS_UNUSED, PS_UNUSED, PS_UNUSED)     \
-            PS_DEFER(SRV_LIST_INDIRECT)(PS_SEL_SRV_DES, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED) \
+            PS_DEFER(MSG_LIST_INDIRECT)(PS_UNUSED, PS_SEL_DES, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)     \
+            PS_DEFER(SRV_LIST_INDIRECT)(PS_SEL_SRV_DES, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED) \
             default: 0                                                                              \
         )(&reader, pMSG);                                                                           \
         _ok;                                                                                        \
@@ -366,23 +387,32 @@ bool ucdr_serialize_rstring(ucdrBuffer* writer, char* pstring);
 bool ucdr_serialize_array_rstring(ucdrBuffer* ub, char** strings, uint32_t number);
 
 /**
- * @brief Deserialize a sequence of strings
- * @param ub CDR buffer
- * @param strings Array to store strings
- * @param max_number Maximum number of strings
- * @param number Actual number of strings read
- * @return true if deserialization successful
- */
+* @brief Deserialize array of strings
+* @param ub CDR buffer
+* @param strings Array to store strings
+* @param number Actual number of strings read
+* @return true if deserialization successful
+*/
+bool ucdr_deserialize_array_rstring(ucdrBuffer* ub, char** strings, uint32_t number);
+
+/**
+* @brief Deserialize a sequence of strings
+* @param ub CDR buffer
+* @param strings Array to store strings
+* @param max_number Maximum number of strings
+* @param number Actual number of strings read
+* @return true if deserialization successful
+*/
 bool ucdr_deserialize_sequence_rstring(ucdrBuffer* ub, char** strings, uint32_t max_number, uint32_t* number);
 
 /**
- * @brief Deserialize array of strings
- * @param ub CDR buffer
- * @param strings Array to store strings
- * @param number Actual number of strings read
- * @return true if deserialization successful
- */
-bool ucdr_deserialize_array_rstring(ucdrBuffer* ub, char** strings, uint32_t number);
+* @brief Serialize sequence of strings
+* @param ub CDR buffer
+* @param strings Array to store strings
+* @param number Number of strings to write
+* @return true if serialization successful
+*/
+bool ucdr_serialize_sequence_rstring(ucdrBuffer* ub, char** strings, uint32_t number);
 
 /**
  * @brief Start writing a sequence
@@ -446,8 +476,8 @@ void ucdr_seq_end(ucdr_writer_t* writer);
 // Generate C++ overloads for all message types
 BASE_TYPES_LIST(PS_CPP_SER_OVERLOAD)
 BASE_TYPES_LIST(PS_CPP_DES_OVERLOAD)
-MSG_LIST(PS_UNUSED, PS_CPP_SER_OVERLOAD, PS_UNUSED, PS_UNUSED, PS_UNUSED)
-MSG_LIST(PS_UNUSED, PS_CPP_DES_OVERLOAD, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+MSG_LIST(PS_UNUSED, PS_CPP_SER_OVERLOAD, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+MSG_LIST(PS_UNUSED, PS_CPP_DES_OVERLOAD, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
 
 // Generate C++ overloads for service request/reply types
 #define PS_CPP_SRV_SER_OVERLOAD(TYPE, NAME, HASH, ...)                     \
@@ -481,8 +511,8 @@ MSG_LIST(PS_UNUSED, PS_CPP_DES_OVERLOAD, PS_UNUSED, PS_UNUSED, PS_UNUSED)
     }
 
 // Generate C++ overloads for all service types
-SRV_LIST(PS_CPP_SRV_SER_OVERLOAD, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
-SRV_LIST(PS_CPP_SRV_DES_OVERLOAD, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+SRV_LIST(PS_CPP_SRV_SER_OVERLOAD, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
+SRV_LIST(PS_CPP_SRV_DES_OVERLOAD, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
 
 /** @} */
 

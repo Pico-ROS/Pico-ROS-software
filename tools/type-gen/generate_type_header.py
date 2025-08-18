@@ -445,7 +445,7 @@ def parse_type_descriptions(output_dir: str) -> Dict[str, Dict]:
         # 22: 'bounded_wstring', # FIELD_TYPE_BOUNDED_WSTRING
 
         # Fixed size arrays (49-70)
-        # 49: 'nested[]',  # FIELD_TYPE_NESTED_TYPE_ARRAY
+        #49: 'nested[]',  # FIELD_TYPE_NESTED_TYPE_ARRAY
         50: 'int8[]',    # FIELD_TYPE_INT8_ARRAY
         51: 'uint8[]',   # FIELD_TYPE_UINT8_ARRAY
         52: 'int16[]',   # FIELD_TYPE_INT16_ARRAY
@@ -469,7 +469,7 @@ def parse_type_descriptions(output_dir: str) -> Dict[str, Dict]:
         # 70: 'bounded_wstring[]', # FIELD_TYPE_BOUNDED_WSTRING_ARRAY
 
         # Bounded sequences (97-118)
-        # 97: 'nested_bounded_sequence',  # FIELD_TYPE_NESTED_TYPE_BOUNDED_SEQUENCE
+        #97: 'nested_bounded_sequence',  # FIELD_TYPE_NESTED_TYPE_BOUNDED_SEQUENCE
         # 98: 'int8_bounded_sequence',    # FIELD_TYPE_INT8_BOUNDED_SEQUENCE
         # 99: 'uint8_bounded_sequence',   # FIELD_TYPE_UINT8_BOUNDED_SEQUENCE
         # 100: 'int16_bounded_sequence',  # FIELD_TYPE_INT16_BOUNDED_SEQUENCE
@@ -493,23 +493,23 @@ def parse_type_descriptions(output_dir: str) -> Dict[str, Dict]:
         # 118: 'bounded_wstring_bounded_sequence', # FIELD_TYPE_BOUNDED_WSTRING_BOUNDED_SEQUENCE
 
         # Unbounded sequences (145-166)
-        # 145: 'nested_unbounded_sequence', # FIELD_TYPE_NESTED_TYPE_UNBOUNDED_SEQUENCE
-        # 146: 'int8_unbounded_sequence',   # FIELD_TYPE_INT8_UNBOUNDED_SEQUENCE
-        # 147: 'uint8_unbounded_sequence',  # FIELD_TYPE_UINT8_UNBOUNDED_SEQUENCE
-        # 148: 'int16_unbounded_sequence',  # FIELD_TYPE_INT16_UNBOUNDED_SEQUENCE
-        # 149: 'uint16_unbounded_sequence', # FIELD_TYPE_UINT16_UNBOUNDED_SEQUENCE
-        # 150: 'int32_unbounded_sequence',  # FIELD_TYPE_INT32_UNBOUNDED_SEQUENCE
-        # 151: 'uint32_unbounded_sequence', # FIELD_TYPE_UINT32_UNBOUNDED_SEQUENCE
-        # 152: 'int64_unbounded_sequence',  # FIELD_TYPE_INT64_UNBOUNDED_SEQUENCE
-        # 153: 'uint64_unbounded_sequence', # FIELD_TYPE_UINT64_UNBOUNDED_SEQUENCE
-        # 154: 'float32_unbounded_sequence', # FIELD_TYPE_FLOAT_UNBOUNDED_SEQUENCE
-        # 155: 'float64_unbounded_sequence', # FIELD_TYPE_DOUBLE_UNBOUNDED_SEQUENCE
+        145: 'nested_unbounded_sequence', # FIELD_TYPE_NESTED_TYPE_UNBOUNDED_SEQUENCE
+        146: 'int8_unbounded_sequence',   # FIELD_TYPE_INT8_UNBOUNDED_SEQUENCE
+        147: 'uint8_unbounded_sequence',  # FIELD_TYPE_UINT8_UNBOUNDED_SEQUENCE
+        148: 'int16_unbounded_sequence',  # FIELD_TYPE_INT16_UNBOUNDED_SEQUENCE
+        149: 'uint16_unbounded_sequence', # FIELD_TYPE_UINT16_UNBOUNDED_SEQUENCE
+        150: 'int32_unbounded_sequence',  # FIELD_TYPE_INT32_UNBOUNDED_SEQUENCE
+        151: 'uint32_unbounded_sequence', # FIELD_TYPE_UINT32_UNBOUNDED_SEQUENCE
+        152: 'int64_unbounded_sequence',  # FIELD_TYPE_INT64_UNBOUNDED_SEQUENCE
+        153: 'uint64_unbounded_sequence', # FIELD_TYPE_UINT64_UNBOUNDED_SEQUENCE
+        154: 'float32_unbounded_sequence', # FIELD_TYPE_FLOAT_UNBOUNDED_SEQUENCE
+        155: 'float64_unbounded_sequence', # FIELD_TYPE_DOUBLE_UNBOUNDED_SEQUENCE
         # 156: 'long_double_unbounded_sequence', # FIELD_TYPE_LONG_DOUBLE_UNBOUNDED_SEQUENCE
-        # 157: 'char_unbounded_sequence',   # FIELD_TYPE_CHAR_UNBOUNDED_SEQUENCE
+        157: 'char_unbounded_sequence',   # FIELD_TYPE_CHAR_UNBOUNDED_SEQUENCE
         # 158: 'wchar_unbounded_sequence',  # FIELD_TYPE_WCHAR_UNBOUNDED_SEQUENCE
-        # 159: 'bool_unbounded_sequence',   # FIELD_TYPE_BOOLEAN_UNBOUNDED_SEQUENCE
-        # 160: 'byte_unbounded_sequence',   # FIELD_TYPE_BYTE_UNBOUNDED_SEQUENCE
-        # 161: 'string_unbounded_sequence', # FIELD_TYPE_STRING_UNBOUNDED_SEQUENCE
+        159: 'bool_unbounded_sequence',   # FIELD_TYPE_BOOLEAN_UNBOUNDED_SEQUENCE
+        160: 'byte_unbounded_sequence',   # FIELD_TYPE_BYTE_UNBOUNDED_SEQUENCE
+        161: 'string_unbounded_sequence', # FIELD_TYPE_STRING_UNBOUNDED_SEQUENCE
         # 162: 'wstring_unbounded_sequence', # FIELD_TYPE_WSTRING_UNBOUNDED_SEQUENCE
         # 163: 'fixed_string_unbounded_sequence', # FIELD_TYPE_FIXED_STRING_UNBOUNDED_SEQUENCE
         # 164: 'fixed_wstring_unbounded_sequence', # FIELD_TYPE_FIXED_WSTRING_UNBOUNDED_SEQUENCE
@@ -581,19 +581,48 @@ def parse_json_fields(fields: List[Dict], type_id_map: Dict[int, str]) -> List[D
                 'type': nested_type_name,
                 'name': field_name,
                 'is_array': False,
-                'array_size': None
+                'array_size': None,
+                'is_seq': False
+            })
+        elif type_id == 49 and nested_type_name:
+            # Nested type
+            parsed_fields.append({
+                'type': nested_type_name,
+                'name': field_name[:-2] ,
+                'is_array': True,
+                'array_size': capacity,
+                'is_seq': False
+            })
+        elif type_id == 145 and nested_type_name:
+            # Nested type
+            parsed_fields.append({
+                'type': nested_type_name,
+                'name': field_name,
+                'is_array': False,
+                'array_size': None,
+                'is_seq': True
             })
         elif type_id in type_id_map:
             type_name = type_id_map[type_id]
 
-            if type_name.endswith('[]') and capacity > 0:
+            if type_name.endswith('[]'):
                 # Fixed-size array
                 base_type = type_name[:-2]  # Remove '[]'
                 parsed_fields.append({
                     'type': base_type,
                     'name': field_name,
                     'is_array': True,
+                    'is_seq': False,
                     'array_size': capacity
+                })
+            elif "sequence" in type_name:
+                base_type = type_name[:-2]  # Remove '[]'
+                parsed_fields.append({
+                    'type': type_name.split("_")[0],
+                    'name': field_name,
+                    'is_array': False,
+                    'is_seq': True,
+                    'array_size': 0
                 })
             else:
                 # Regular field
@@ -601,7 +630,8 @@ def parse_json_fields(fields: List[Dict], type_id_map: Dict[int, str]) -> List[D
                     'type': type_name,
                     'name': field_name,
                     'is_array': False,
-                    'array_size': None
+                    'array_size': None,
+                    'is_seq': False
                 })
         else:
             print(f"Field {field_name} incompatible ID {type_id}")
@@ -699,7 +729,7 @@ def classify_type(fields: List[Dict]) -> str:
     if not fields:
         return "BTYPE"  # Empty type, treat as basic
 
-    if len(fields) == 1 and not fields[0]['is_array']:
+    if len(fields) == 1 and not (fields[0]['is_array'] or fields[0]['is_seq']):
         # Single non-array field - could be BTYPE or TTYPE
         field_type = fields[0]['type']
 
@@ -795,6 +825,8 @@ def generate_fields_string(fields: List[Dict], type_info: Dict[str, Dict]) -> Op
 
         if field['is_array'] and field['array_size'] is not None:
             field_lines.append(f'            ARRAY({field_type}, {field_name}, {field["array_size"]}) \\\n')
+        elif field['is_seq']:
+            field_lines.append(f'            SEQUENCE({field_type}, {field_name}) \\\n')
         else:
             field_lines.append(f'            FIELD({field_type}, {field_name}) \\\n')
 
@@ -857,7 +889,7 @@ def generate_srv_list(service_groups: Dict[str, Dict], type_info: Dict[str, Dict
             print(f"  - {service}")
 
     if entries:
-        srv_list = '#define SRV_LIST(SRV, REQUEST, REPLY, FIELD, ARRAY) \\\n'
+        srv_list = '#define SRV_LIST(SRV, REQUEST, REPLY, FIELD, ARRAY, SEQUENCE) \\\n'
         srv_list += ' \\\n'.join(entries)
         srv_list += '\n'
         return srv_list
@@ -896,7 +928,7 @@ def generate_c_header(type_info: Dict[str, Dict], output_file: str) -> None:
         f.write('#ifndef GENERATED_TYPES_H\n')
         f.write('#define GENERATED_TYPES_H\n\n')
 
-        f.write('#define MSG_LIST(BTYPE, CTYPE, TTYPE, FIELD, ARRAY) \\\n')
+        f.write('#define MSG_LIST(BTYPE, CTYPE, TTYPE, FIELD, ARRAY, SEQUENCE) \\\n')
 
         entries = []
         for type_name in sorted_types:
@@ -943,6 +975,8 @@ def generate_c_header(type_info: Dict[str, Dict], output_file: str) -> None:
 
                     if field['is_array']:
                         entry += f'        ARRAY({field_type}, {field_name}, {field["array_size"]}) \\\n'
+                    elif field['is_seq']:
+                        entry += f'        SEQUENCE({field_type}, {field_name}) \\\n'
                     else:
                         entry += f'        FIELD({field_type}, {field_name}) \\\n'
 
