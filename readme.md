@@ -117,7 +117,9 @@ While it provides core ROS functionality, it's not intended to replace full ROS 
 
 ## Using in your project
 
-See the examples directory for implementation references. When adding new types, use the `example_types.h` as a template for the required format.
+See the examples directory for implementation references. 
+
+Automatic generation of `user_types.h` file can be done using scripts in [/tools/type-gen](tools/type-gen/readme.md). Format of the file is descibed in `picoserdes.h`.
 
 ## License
 
