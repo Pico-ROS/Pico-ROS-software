@@ -114,6 +114,7 @@ int main() {
 
     // Input data - base types
     bool test_bool = true;
+    char test_char = 'x';
     int8_t test_int8_t = -11;
     uint8_t test_uint8_t = 201;
     int16_t test_int16_t = -30000;

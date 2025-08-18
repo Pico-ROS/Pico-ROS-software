@@ -418,6 +418,7 @@ def parse_type_descriptions(output_dir: str) -> Dict[str, Dict]:
     output_path = Path(output_dir)
 
     # ROS type ID to type name mapping (from rosidl_runtime_c)
+    # Used as list of supported types
     ros_type_id_to_name = {
         # Basic types
         1: 'nested',  # FIELD_TYPE_NESTED_TYPE
@@ -655,7 +656,7 @@ def group_service_types(type_info: Dict[str, Dict]) -> Dict[str, Dict]:
         if "/srv/" not in type_name:
             continue
 
-        # Skip Event types - not needed for C library
+        # Skip Event types - not supported
         if type_name.endswith("_Event"):
             continue
 
@@ -738,7 +739,7 @@ def get_c_primitive_type(ros_type: str) -> str:
         'float32': 'float',
         'float64': 'double',
         'string': 'rstring',
-        'wstring': 'rwstring',
+        'wstring': 'wrstring',
         'byte' : 'uint8_t'
     }
 
@@ -1010,7 +1011,7 @@ def main():
         '--packages-dir',
         required=True,
         nargs='*',
-        help='Path to package directory (single package) or workspace root (multiple packages)'
+        help='Path to interface packages and their dependancies. Workspace root or list of paths.'
     )
 
     parser.add_argument(
@@ -1035,27 +1036,27 @@ def main():
         output_path.mkdir(parents=True, exist_ok=True)
 
         # Process include paths and auto-generate dependencies first
-        dependency_packages = []
+        interface_packages = []
         if args.packages_dir:
-            print(f"Discovering dependency packages from include paths...")
+            print(f"Discovering interface packages from include paths...")
 
             for include_path in args.packages_dir:
                 found_deps = discover_packages(include_path, interface_packages_only=True)
-                dependency_packages.extend(found_deps)
+                interface_packages.extend(found_deps)
 
             # Remove duplicates and target packages from dependencies
-            dependency_packages = [
-                pkg for pkg in list(set(dependency_packages))
+            interface_packages = [
+                pkg for pkg in list(set(interface_packages))
             ]
 
-            print(f"Discovered {len(dependency_packages)} dependency package(s):")
-            for pkg_dir in dependency_packages:
+            print(f"Discovered {len(interface_packages)} interface package(s):")
+            for pkg_dir in interface_packages:
                 pkg_info = parse_package_xml(pkg_dir)
                 print(f"  {pkg_info['name']} ({pkg_dir})")
 
             # Auto-generate type descriptions for dependencies
-            if dependency_packages:
-                process_dependencies(dependency_packages, args.output_dir)
+            if interface_packages:
+                process_dependencies(interface_packages, args.output_dir)
 
     # Parse generated JSON files and create C header
     print(f"\nGenerating C header file from type descriptions...")

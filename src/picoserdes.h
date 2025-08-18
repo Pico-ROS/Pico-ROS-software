@@ -106,6 +106,7 @@
  */
 #define BASE_TYPES_LIST(TYPE)   \
     TYPE(bool)                  \
+    TYPE(char)                  \
     TYPE(int8_t)                \
     TYPE(uint8_t)               \
     TYPE(int16_t)               \
