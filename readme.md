@@ -51,14 +51,12 @@
 
 The project includes several example applications demonstrating different features:
 
-- **Basic Communication**
   - `talker.c`: Basic publisher example
   - `listener.c`: Basic subscriber example
-
-- **Advanced Features**
   - `srv_add2ints.c`: Service server example
   - `params_server.c`: Parameter server implementation
   - `odometry_publisher.c` & `odometry_listener.c`: ROS odometry message handling
+  - `batteryState_publisher.c` BatteryState message with sequence fields.
 
 #### Running the Examples
 
