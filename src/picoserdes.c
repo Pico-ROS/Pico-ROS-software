@@ -1,4 +1,3 @@
-#include "ucdr/microcdr.h"
 /*******************************************************************************
  * @file    picoserdes.c
  * @brief   Pico CDR serdes implementation
@@ -42,9 +41,7 @@ bool ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg) {                             
 }                                                                                      \
 bool ps_ser_sequence_##TYPE(ucdrBuffer* writer, TYPE##_sequence* msg) {                \
     return ucdr_serialize_sequence_##TYPE(writer, msg->data, msg->n_elements);         \
-}
-
-#define PS_SER_BASE_ARRAY(TYPE)                                                        \
+}                                                                                      \
 bool ps_ser_array_##TYPE(ucdrBuffer* writer, TYPE* msg, uint32_t number) {             \
     return ucdr_serialize_array_##TYPE(writer, msg, number);                           \
 }
@@ -56,17 +53,13 @@ bool ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) {                             
 bool ps_des_sequence_##TYPE(ucdrBuffer* reader, TYPE##_sequence* msg) {                \
     uint32_t len = 0;                                                                  \
     return ucdr_deserialize_sequence_##TYPE(reader, msg->data, msg->n_elements, &len); \
-}
-
-#define PS_DES_BASE_ARRAY(TYPE)                                                        \
+}                                                                                      \
 bool ps_des_array_##TYPE(ucdrBuffer* reader, TYPE* msg, uint32_t max_number) {         \
     return ucdr_deserialize_array_##TYPE(reader, msg, max_number);                     \
 }
 
 BASE_TYPES_LIST(PS_SER_BASE)
-BASE_TYPES_LIST(PS_SER_BASE_ARRAY)
 BASE_TYPES_LIST(PS_DES_BASE)
-BASE_TYPES_LIST(PS_DES_BASE_ARRAY)
 
 /* Public functions ----------------------------------------------------------*/
 
@@ -83,6 +76,7 @@ bool ucdr_deserialize_rstring(ucdrBuffer* ub, char** pstring){
     }
     return ret;
 }
+
 // Wrapper for having consistent names
 bool ucdr_serialize_rstring(ucdrBuffer* writer, char* pstring){
     if (pstring == NULL){
@@ -90,9 +84,6 @@ bool ucdr_serialize_rstring(ucdrBuffer* writer, char* pstring){
     }
     return ucdr_serialize_string(writer, pstring);
 }
-
-// bool ucdr_serialize_sequence_rstring(ucdrBuffer* ub, char** strings, uint32_t number){};
-
 
 // Serialize array of string pointers
 bool ucdr_serialize_array_rstring(ucdrBuffer* ub, char** strings, uint32_t number){
@@ -125,6 +116,7 @@ bool ucdr_deserialize_sequence_rstring(ucdrBuffer* ub, char** strings, uint32_t 
     return false;
 }
 
+// Serialize array of string pointers
 bool ucdr_serialize_sequence_rstring(ucdrBuffer* ub, char** strings, uint32_t number){
     return ucdr_serialize_array_rstring(ub, strings, number);
 }
@@ -181,7 +173,7 @@ void ucdr_seq_end(ucdr_writer_t* writer){
 #define PS_SER_MSG_BIMPL(TYPE, NAME, HASH, TYPE2 ...)                                           \
     bool ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg) { return ps_ser_##TYPE2(writer, msg); }   \
     bool ps_ser_sequence_##TYPE(ucdrBuffer* writer, TYPE##_sequence* msg) {                     \
-        return ps_ser_sequence_##TYPE2(writer, (TYPE2##_sequence*)msg);                          \
+        return ps_ser_sequence_##TYPE2(writer, (TYPE2##_sequence*)msg);                         \
     }
     
     #define PS_SER_MSG_CIMPL(TYPE, NAME, HASH, ...)                                             \
@@ -194,7 +186,7 @@ void ucdr_seq_end(ucdr_writer_t* writer){
     #define PS_DES_MSG_BIMPL(TYPE, NAME, HASH, TYPE2 ...)                                       \
     bool ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) { return ps_des_##TYPE2(reader, msg); }   \
     bool ps_des_sequence_##TYPE(ucdrBuffer* reader, TYPE##_sequence* msg) {                     \
-        return ps_des_sequence_##TYPE2(reader, (TYPE2##_sequence*)msg);                          \
+        return ps_des_sequence_##TYPE2(reader, (TYPE2##_sequence*)msg);                         \
     }
 
 #define PS_DES_MSG_CIMPL(TYPE, NAME, HASH, ...)                                                 \

@@ -304,7 +304,6 @@ BASE_TYPES_LIST(PS_DES_FUNC_DEF)
 /** @} */
 
 
-
 /**
  * @defgroup generic_serdes_macros Generic serdes macros
  * @ingroup picoserdes
@@ -457,19 +456,19 @@ void ucdr_seq_end(ucdr_writer_t* writer);
 // Template overload generation macros
 #define PS_CPP_SER_OVERLOAD(TYPE, ...)                                     \
     inline size_t ps_serialize(uint8_t* pBUF, TYPE* pMSG, size_t MAX) {    \
-        ucdrBuffer writer = {};                                             \
+        ucdrBuffer writer = {};                                            \
         *((uint32_t*)pBUF) = 0x0100; /* Little endian header */            \
         ucdr_init_buffer(&writer, pBUF + 4, MAX - 4);                      \
-        ps_ser_##TYPE(&writer, pMSG);                                       \
-        return ucdr_buffer_length(&writer) + 4;                             \
+        ps_ser_##TYPE(&writer, pMSG);                                      \
+        return ucdr_buffer_length(&writer) + 4;                            \
     }
 
 #define PS_CPP_DES_OVERLOAD(TYPE, ...)                                     \
     inline bool ps_deserialize(uint8_t* pBUF, TYPE* pMSG, size_t MAX) {    \
-        ucdrBuffer reader = {};                                             \
-        ucdr_init_buffer(&reader, pBUF + sizeof(uint32_t),                  \
-                        MAX - sizeof(uint32_t));                            \
-        return ps_des_##TYPE(&reader, pMSG);                                \
+        ucdrBuffer reader = {};                                            \
+        ucdr_init_buffer(&reader, pBUF + sizeof(uint32_t),                 \
+                        MAX - sizeof(uint32_t));                           \
+        return ps_des_##TYPE(&reader, pMSG);                               \
     }
 
 
@@ -484,19 +483,19 @@ MSG_LIST(PS_UNUSED, PS_CPP_DES_OVERLOAD, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNU
     inline size_t ps_serialize(uint8_t* pBUF, request_##TYPE* pMSG, size_t MAX) { \
         ucdrBuffer writer = {};                                             \
         *((uint32_t*)pBUF) = 0x0100;                                        \
-        ucdr_init_buffer(&writer, pBUF + 4, MAX - 4);                      \
+        ucdr_init_buffer(&writer, pBUF + 4, MAX - 4);                       \
         ps_ser_##TYPE##_request(&writer, pMSG);                             \
         return ucdr_buffer_length(&writer) + 4;                             \
     }                                                                       \
     inline size_t ps_serialize(uint8_t* pBUF, reply_##TYPE* pMSG, size_t MAX) { \
         ucdrBuffer writer = {};                                             \
         *((uint32_t*)pBUF) = 0x0100;                                        \
-        ucdr_init_buffer(&writer, pBUF + 4, MAX - 4);                      \
+        ucdr_init_buffer(&writer, pBUF + 4, MAX - 4);                       \
         ps_ser_##TYPE##_reply(&writer, pMSG);                               \
         return ucdr_buffer_length(&writer) + 4;                             \
     }
 
-#define PS_CPP_SRV_DES_OVERLOAD(TYPE, NAME, HASH, ...)                     \
+#define PS_CPP_SRV_DES_OVERLOAD(TYPE, NAME, HASH, ...)                      \
     inline bool ps_deserialize(uint8_t* pBUF, request_##TYPE* pMSG, size_t MAX) { \
         ucdrBuffer reader = {};                                             \
         ucdr_init_buffer(&reader, pBUF + sizeof(uint32_t),                  \
