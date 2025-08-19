@@ -179,8 +179,9 @@ void ucdr_seq_end(ucdr_writer_t* writer){
     #define PS_SER_MSG_CIMPL(TYPE, NAME, HASH, ...)                                             \
     bool ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg) { __VA_ARGS__ return true; }              \
     bool ps_ser_sequence_##TYPE(ucdrBuffer* writer, TYPE##_sequence* msg) {                     \
-        ucdr_serialize_uint32_t(writer, msg->n_elements); \
+        ucdr_serialize_uint32_t(writer, msg->n_elements);                                       \
         for (int i = 0; i < msg->n_elements; i++){if (ps_ser_##TYPE(writer, &msg->data[i]) == false) {return false;}} \
+        return true;                                                                            \
     }
     
     #define PS_DES_MSG_BIMPL(TYPE, NAME, HASH, TYPE2 ...)                                       \
@@ -196,6 +197,7 @@ void ucdr_seq_end(ucdr_writer_t* writer){
         ucdr_deserialize_uint32_t(reader, &elements);                                           \
         if (elements > msg->n_elements){return false;}                                          \
         for (int i = 0; i < elements; i++){if (ps_des_##TYPE(reader, &msg->data[i]) == false){return false;}} \
+        return true;                                                                            \
     }
 
 #define PS_SER_SRV(TYPE, NAME, HASH, REQ, REP)                                                  \
