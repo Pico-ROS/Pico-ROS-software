@@ -119,7 +119,7 @@ picoros_res_t picoparams_init(picoros_node_t* node, picoparams_interface_t ifx){
 
 
 /* Private functions ---------------------------------------------------------*/
-static size_t serialize_ros_ParameterValue(ucdrBuffer* writer, ros_ParameterValue* val){
+static size_t serialize_ros_ParameterValue(ucdrBuffer* writer, pp_ParameterValue* val){
 
 #define serialize_value(TYPE, VAL, func)                        \
     if (val->type == TYPE){                                     \
@@ -166,7 +166,7 @@ static size_t serialize_ros_ParameterValue(ucdrBuffer* writer, ros_ParameterValu
 
 }
 
-static void deserialize_ros_ParameterValue(ucdrBuffer* reader, ros_ParameterValue* val){
+static void deserialize_ros_ParameterValue(ucdrBuffer* reader, pp_ParameterValue* val){
     bool    d_bool;
     int64_t d_int;
     double  d_double;
@@ -232,7 +232,7 @@ static void deserialize_ros_ParameterValue(ucdrBuffer* reader, ros_ParameterValu
 //    }
 }
 
-static size_t serialize_rcl_ParameterDescriptor(ucdrBuffer* writer, ros_ParameterDescriptor* pd){
+static size_t serialize_rcl_ParameterDescriptor(ucdrBuffer* writer, pp_ParameterDescriptor* pd){
     ucdr_serialize_rstring(writer, pd->name);
     ucdr_serialize_uint8_t(writer, pd->type);
     ucdr_serialize_rstring(writer, pd->description);
@@ -312,7 +312,7 @@ static size_t get_params_value(picoparams_server_t* server, ucdrBuffer* reader, 
     ucdr_serialize_uint32_t(writer, n_targets);
     for (int i = 0; i < n_targets; i++){
        void* param = pserver.interface.f_ref(target_params[i]);
-       ros_ParameterValue val = {};
+       pp_ParameterValue val = {};
        if (param){
            val = pserver.interface.f_get(param);
        }
@@ -335,7 +335,7 @@ static size_t set_params_value(picoparams_server_t* server, ucdrBuffer* reader, 
             ucdr_serialize_string(writer, "Parameter not found");
             continue;
         }
-        ros_ParameterValue val = {};
+        pp_ParameterValue val = {};
         deserialize_ros_ParameterValue(reader, &val);
         char* error_msg = NULL;
         bool status = pserver.interface.f_set(param, &val, &error_msg);
@@ -376,7 +376,7 @@ static size_t describe_params(picoparams_server_t* server, ucdrBuffer* reader, u
     ucdr_serialize_uint32_t(writer, n_targets);
     for (int i = 0; i < n_targets; i++){
         void* param = pserver.interface.f_ref(target_params[i]);
-        ros_ParameterDescriptor pdesc = {};
+        pp_ParameterDescriptor pdesc = {};
         if (param){
             pdesc = pserver.interface.f_describe(param);
         }

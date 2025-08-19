@@ -31,8 +31,8 @@ uint8_t srv_buf[1024];
 picoros_service_t add2_srv = {
     .topic = {
         .name = "add2",
-        .type = ROSTYPE_NAME(srv_add2Ints),
-        .rihs_hash = ROSTYPE_HASH(srv_add2Ints),
+        .type = ROSTYPE_NAME(srv_AddTwoInts),
+        .rihs_hash = ROSTYPE_HASH(srv_AddTwoInts),
     },
     .user_callback = add2_srv_cb,
 };
@@ -45,8 +45,8 @@ picoros_node_t node = {
 // Service callback
 picoros_service_reply_t add2_srv_cb(uint8_t* rx_data, size_t rx_size, void* user_data){
     // request, response structs
-    request_srv_add2Ints request = {};
-    reply_srv_add2Ints response = {};
+    request_srv_AddTwoInts request = {};
+    reply_srv_AddTwoInts response = {};
     // deserialize request
     ps_deserialize(rx_data, &request, rx_size);
     // apply service

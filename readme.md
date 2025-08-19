@@ -51,14 +51,13 @@
 
 The project includes several example applications demonstrating different features:
 
-- **Basic Communication**
-  - `talker.c`: Basic publisher example
+  - `talker.c` & `talker.cpp`: Basic publisher example
   - `listener.c`: Basic subscriber example
-
-- **Advanced Features**
   - `srv_add2ints.c`: Service server example
   - `params_server.c`: Parameter server implementation
   - `odometry_publisher.c` & `odometry_listener.c`: ROS odometry message handling
+  - `batteryState_publisher.c` BatteryState message with sequence fields.
+  - `jointState_publisher.cpp` JointState message with sequence fields in cpp.
 
 #### Running the Examples
 
@@ -117,7 +116,9 @@ While it provides core ROS functionality, it's not intended to replace full ROS 
 
 ## Using in your project
 
-See the examples directory for implementation references. When adding new types, use the `example_types.h` as a template for the required format.
+See the examples directory for implementation references. 
+
+Automatic generation of `user_types.h` file can be done using scripts in [/tools/type-gen](tools/type-gen/readme.md). Format of the file is descibed in `picoserdes.h`.
 
 ## License
 

@@ -34,8 +34,8 @@ picoros_node_t node = {
 // Example parameters
 // Should probably be implemented as different structure in your application.
 typedef struct{
-    ros_ParameterDescriptor desc;
-    ros_ParameterValue      val;
+    pp_ParameterDescriptor desc;
+    pp_ParameterValue      val;
 }parameter_t;
 
 #define N_PARAMS 3
@@ -77,10 +77,10 @@ parameter_t params[N_PARAMS] = {
 
 // Parameters server api functions declaration
 void*                   api_param_ref(char* name);
-ros_ParameterDescriptor api_param_describe(void* param);
-ros_ParameterValue      api_param_get(void* param);
-ros_ParameterType       api_param_type(void* param);
-bool                    api_param_set(void* param, ros_ParameterValue* value, char** error_msg);
+pp_ParameterDescriptor  api_param_describe(void* param);
+pp_ParameterValue       api_param_get(void* param);
+pp_ParameterType        api_param_type(void* param);
+bool                    api_param_set(void* param, pp_ParameterValue* value, char** error_msg);
 int                     api_param_list(char* prefix,  void (*write_next)(char* param_name) );
 int                     api_prefix_list(char* prefix,  void (*write_next)(char* prefix_name) );
 
@@ -137,17 +137,17 @@ void* api_param_ref(char* name){
     return NULL;
 }
 
-ros_ParameterDescriptor api_param_describe(void* param){
+pp_ParameterDescriptor api_param_describe(void* param){
     parameter_t* p = (parameter_t*)param;
     return p->desc;
 }
 
-ros_ParameterValue  api_param_get(void* param){
+pp_ParameterValue  api_param_get(void* param){
     parameter_t* p = (parameter_t*)param;
     return p->val;
 }
 
-ros_ParameterType api_param_type(void* param){
+pp_ParameterType api_param_type(void* param){
     parameter_t* p = (parameter_t*)param;
     return p->desc.type;
 }
@@ -173,7 +173,7 @@ size_t get_param_value_size(parameter_t* p){
     return ret * p->val.length;
 }
 
-bool api_param_set(void* param, ros_ParameterValue* value, char** error_msg){
+bool api_param_set(void* param, pp_ParameterValue* value, char** error_msg){
     parameter_t* p = (parameter_t*)param;
     if (p->desc.type != value->type){
         *error_msg = "Error wrong value";

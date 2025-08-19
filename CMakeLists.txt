@@ -58,29 +58,31 @@ target_include_directories(picoparams PUBLIC
 if (TYPE_FILE)
   message("USER_TYPE_FILE: ${TYPE_FILE}")
   target_compile_definitions(picoserdes PUBLIC -DUSER_TYPE_FILE="${TYPE_FILE}")
-endif()
-target_link_libraries(picoros zenohpico::lib)
-target_link_libraries(picoserdes microcdr)
-target_link_libraries(picoparams zenohpico::lib microcdr picors picoserdes)
-
-# Add test executable
-if(PICOROS_BUILD_TESTS AND TYPE_FILE)
+  endif()
+  target_link_libraries(picoros zenohpico::lib)
+  target_link_libraries(picoserdes microcdr)
+  target_link_libraries(picoparams zenohpico::lib microcdr picors picoserdes)
+  
+  # Add test executable
+  if(PICOROS_BUILD_TESTS AND TYPE_FILE)
   message("User types serdes tests enabled")
   add_executable(test_user_types_serdes test/test_picoserdes.c)
   target_include_directories(test_user_types_serdes PRIVATE src)
   target_link_libraries(test_user_types_serdes PRIVATE picoserdes microcdr)
   add_test(NAME test_user_types_serdes COMMAND test_user_types)
-endif()
+  endif()
+  
+  # Build examples if enabled
+  if(PICOROS_BUILD_EXAMPLES)
+    add_library(examples_serdes STATIC
+      src/picoserdes.c
+      src/picoserdes.h
+    )
+    target_compile_definitions(picoros PUBLIC -DPICOROS_DEBUG)
 
-# Build examples if enabled
-if(PICOROS_BUILD_EXAMPLES)
-  add_library(examples_serdes STATIC
-    src/picoserdes.c
-    src/picoserdes.h
-  )
-  target_include_directories(examples_serdes PUBLIC examples)
-  target_compile_definitions(examples_serdes PUBLIC -DUSER_TYPE_FILE="example_types.h")
-  target_link_libraries(examples_serdes microcdr)
+    target_include_directories(examples_serdes PUBLIC examples)
+    target_compile_definitions(examples_serdes PUBLIC -DUSER_TYPE_FILE="example_types.h")
+    target_link_libraries(examples_serdes microcdr)
   
   # Add test executable
   if(PICOROS_BUILD_TESTS)
@@ -116,6 +118,10 @@ if(PICOROS_BUILD_EXAMPLES)
   target_include_directories(talkerpp PUBLIC ${EXAMPLE_INCLUDE})
   target_link_libraries(talkerpp PRIVATE  ${EXAMPLE_LIBS})
 
+  add_executable(jointState_publisherpp examples/jointState_publisher.cpp  ${EXAMPLE_SRC})
+  target_include_directories(jointState_publisherpp PUBLIC ${EXAMPLE_INCLUDE})
+  target_link_libraries(jointState_publisherpp PRIVATE  ${EXAMPLE_LIBS})
+
   add_executable(listener examples/listener.c  ${EXAMPLE_SRC})
   target_include_directories(listener PUBLIC ${EXAMPLE_INCLUDE})
   target_link_libraries(listener PRIVATE  ${EXAMPLE_LIBS})
@@ -127,6 +133,10 @@ if(PICOROS_BUILD_EXAMPLES)
   add_executable(odometry_publisher examples/odometry_publisher.c  ${EXAMPLE_SRC})
   target_include_directories(odometry_publisher PUBLIC ${EXAMPLE_INCLUDE})
   target_link_libraries(odometry_publisher PRIVATE  ${EXAMPLE_LIBS})
+
+  add_executable(batteryState_publisher examples/batteryState_publisher.c  ${EXAMPLE_SRC})
+  target_include_directories(batteryState_publisher PUBLIC ${EXAMPLE_INCLUDE})
+  target_link_libraries(batteryState_publisher PRIVATE  ${EXAMPLE_LIBS})
 
   add_executable(params_server examples/params_server.c  ${EXAMPLE_SRC})
   target_include_directories(params_server PUBLIC ${EXAMPLE_INCLUDE})

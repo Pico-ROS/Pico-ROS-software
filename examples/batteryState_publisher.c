@@ -9,6 +9,7 @@
  * @copyright Copyright (c) 2025 Ubiquity Robotics
  *******************************************************************************/
   
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
 #include "picoros.h"
@@ -22,11 +23,11 @@
 extern int picoros_parse_args(int argc, char **argv, picoros_interface_t* ifx);
 
 // Example Publisher
-picoros_publisher_t pub_odo = {
+picoros_publisher_t pub_bs = {
     .topic = {
-        .name = "odom",
-        .type = ROSTYPE_NAME(ros_Odometry),
-        .rihs_hash = ROSTYPE_HASH(ros_Odometry),
+        .name = "battery_state",
+        .type = ROSTYPE_NAME(ros_BatteryState),
+        .rihs_hash = ROSTYPE_HASH(ros_BatteryState),
     },
 };
 
@@ -39,22 +40,26 @@ picoros_node_t node = {
 uint8_t pub_buf[1024];
 
 void publish_odometry(){
-    z_clock_t clk = z_clock_now();
-    ros_Odometry odom = {
-        .header = {
-            .frame_id = "odom",
-            .stamp.nanosec = clk.tv_nsec,
-            .stamp.sec = clk.tv_sec,
-        },
-        .child_frame_id = "base-link",
+    ros_BatteryState bat = {
+        .present = true,
+        .location = "main",
+        .serial_number = "ABCD1234",
+        .design_capacity = 20000,
+        .capacity = 18000,
+        .percentage = 50,
+        .charge = 9000,
+        .current = 0.5f,
+        .voltage = 25.1f,
+        .cell_voltage = {.data = (float[]){12.5f, 12.6f}, .n_elements = 2},
+        .cell_temperature = {.data = (float[]){31.2f, 32.5f}, .n_elements = 2},
     };
-    printf("Publishing odometery...\n");
-    size_t len = ps_serialize(pub_buf, &odom, 1024);
+    printf("Publishing battery state...\n");
+    size_t len = ps_serialize(pub_buf, &bat, 1024);
     if (len > 0){
-        picoros_publish(&pub_odo, pub_buf, len);
+        picoros_publish(&pub_bs, pub_buf, len);
     }
     else{
-        printf("Odometry message serialization error.");
+        printf("Message serialization error.");
     }
 }
 
@@ -78,8 +83,8 @@ int main(int argc, char **argv){
     printf("Starting Pico-ROS node %s domain:%d\n", node.name, node.domain_id);
     picoros_node_init(&node);
 
-    printf("Declaring publisher on %s\n", pub_odo.topic.name);
-    picoros_publisher_declare(&node, &pub_odo);
+    printf("Declaring publisher on %s\n", pub_bs.topic.name);
+    picoros_publisher_declare(&node, &pub_bs);
 
     while(true){
         publish_odometry();
