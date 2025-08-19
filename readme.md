@@ -1,5 +1,10 @@
 # Pico-ROS
 
+<p align="center">
+  <img src="docs/picoROS.png" alt="PicoROS logo" style="width:100;">
+</p> 
+
+
 ## Overview
 **Pico-ROS** is a lightweight ROS (Robot Operating System) client implementation designed for resource-constrained devices. Built on top of [zenoh-pico](https://github.com/eclipse-zenoh/zenoh-pico) and working in conjunction with [rmw-zenoh](https://github.com/ros2/rmw_zenoh), it provides an easy-to-use interface to ROS host from embedded systems.
 
