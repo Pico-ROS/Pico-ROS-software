@@ -1,9 +1,6 @@
-# Pico-ROS
-
 <p align="center">
   <img src="docs/picoROS.png" alt="PicoROS logo" style="width:100;">
 </p> 
-
 
 ## Overview
 **Pico-ROS** is a lightweight ROS (Robot Operating System) client implementation designed for resource-constrained devices. Built on top of [zenoh-pico](https://github.com/eclipse-zenoh/zenoh-pico) and working in conjunction with [rmw-zenoh](https://github.com/ros2/rmw_zenoh), it provides an easy-to-use interface to ROS host from embedded systems.
@@ -124,6 +121,10 @@ While it provides core ROS functionality, it's not intended to replace full ROS 
 See the examples directory for implementation references. 
 
 Automatic generation of `user_types.h` file can be done using scripts in [/tools/type-gen](tools/type-gen/readme.md). Format of the file is descibed in `picoserdes.h`.
+
+For compatibility with `rmw_zenohd` default configuration, set matching zenoh-pico lease duration settings with defines or edit the zenoh-pico `config.h` file: 
+ - `-DZ_TRANSPORT_LEASE=60000` and
+ - `-DZ_TRANSPORT_LEASE_EXPIRE_FACTOR=2`
 
 ## License
 
