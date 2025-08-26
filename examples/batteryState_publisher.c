@@ -1,10 +1,10 @@
 /*******************************************************************************
- * @file    odometry_publisher.c
- * @brief   Example odometry publisher node for picoros
- * @date    2025-May-27
+ * @file    batteryState_publisher.c
+ * @brief   Example batteryState publisher node for picoros
+ * @date    2025-Aug-20
  * 
  * @details This example demonstrates a ROS publisher node that publishes
- *          simulated odometry messages on the "odom" topic.
+ *          simulated batteryState messages on the "battery_state" topic.
  * 
  * @copyright Copyright (c) 2025 Ubiquity Robotics
  *******************************************************************************/
@@ -39,7 +39,7 @@ picoros_node_t node = {
 // Buffer for publication, used from this thread
 uint8_t pub_buf[1024];
 
-void publish_odometry(){
+void publish_batteyState(){
     ros_BatteryState bat = {
         .present = true,
         .location = "main",
@@ -53,7 +53,7 @@ void publish_odometry(){
         .cell_voltage = {.data = (float[]){12.5f, 12.6f}, .n_elements = 2},
         .cell_temperature = {.data = (float[]){31.2f, 32.5f}, .n_elements = 2},
     };
-    printf("Publishing battery state...\n");
+    printf("Publishing BatteryState...\n");
     size_t len = ps_serialize(pub_buf, &bat, 1024);
     if (len > 0){
         picoros_publish(&pub_bs, pub_buf, len);
@@ -87,7 +87,7 @@ int main(int argc, char **argv){
     picoros_publisher_declare(&node, &pub_bs);
 
     while(true){
-        publish_odometry();
+        publish_batteyState();
         z_sleep_s(1);
     }
     return 0;

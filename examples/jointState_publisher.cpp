@@ -1,6 +1,6 @@
 /*******************************************************************************
  * @file    jointState_publisher.cpp
- * @brief   Example cpp jointState_publisher node for picoros
+ * @brief   Example cpp jointState publisher node for picoros
  * @date    2025-Avg-19
  *
  * @details This example demonstrates a simple ROS publisher node that
@@ -40,7 +40,7 @@ picoros_node_t node = {
 // Buffer for publication, used from this thread
 uint8_t pub_buf[1024];
 
-void publish_log() {
+void publish_jointState() {
     double positions[] = {-1, 0, 1};
     double velocities[] = {0.5, 0, -0.1};
     double efforst[] = {0.5, 0, 0.2};
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
     picoros_publisher_declare(&node, &publisher);
 
     while (true) {
-        publish_log();
+        publish_jointState();
         z_sleep_s(1);
     }
     return 0;
