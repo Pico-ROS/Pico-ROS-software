@@ -27,9 +27,18 @@ set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(thirdparty/zenoh-pico)
 
 # Micro-CDR
-set(UCDR_SUPERBUILD OFF)
-set(UCDR_ISOLATED_INSTALL OFF)
-add_subdirectory(thirdparty/Micro-CDR)
+add_library(microcdr STATIC
+    thirdparty/Micro-CDR/src/c/common.c
+    thirdparty/Micro-CDR/src/c/common_internal.h
+    thirdparty/Micro-CDR/src/c/types/array.c
+    thirdparty/Micro-CDR/src/c/types/basic.c
+    thirdparty/Micro-CDR/src/c/types/sequence.c
+    thirdparty/Micro-CDR/src/c/types/string.c
+)
+target_include_directories(microcdr PUBLIC
+    thirdparty/Micro-CDR/include
+    thirdparty/config
+)
 
 add_library(picoros STATIC
     src/picoros.c
