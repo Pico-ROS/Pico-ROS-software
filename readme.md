@@ -46,8 +46,9 @@
    ```
 
 #### Build Options
-- Custom type definitions: `-DUSER_TYPE_FILE="user_types.h"`
+- Custom type definitions: `-DUSER_TYPE_FILE=user_types.h`
 - Disable examples: `-DPICOROS_BUILD_EXAMPLES=OFF`
+- Disable tests: `-DPICOROS_BUILD_TESTS=OFF`
 
 ### Examples
 
