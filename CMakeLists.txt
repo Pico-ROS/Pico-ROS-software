@@ -118,9 +118,13 @@ if(PICOROS_BUILD_EXAMPLES)
             thirdparty/Micro-CDR/include
   )
 
-  add_executable(srv_add2ints examples/srv_add2ints.c ${EXAMPLE_SRC})
-  target_include_directories(srv_add2ints PUBLIC ${EXAMPLE_INCLUDE})
-  target_link_libraries(srv_add2ints PRIVATE  ${EXAMPLE_LIBS})
+  add_executable(srv_server_add2ints examples/srv_server_add2ints.c ${EXAMPLE_SRC})
+  target_include_directories(srv_server_add2ints PUBLIC ${EXAMPLE_INCLUDE})
+  target_link_libraries(srv_server_add2ints PRIVATE  ${EXAMPLE_LIBS})
+
+  add_executable(srv_client_add2ints examples/srv_client_add2ints.c ${EXAMPLE_SRC})
+  target_include_directories(srv_client_add2ints PUBLIC ${EXAMPLE_INCLUDE})
+  target_link_libraries(srv_client_add2ints PRIVATE  ${EXAMPLE_LIBS})
 
   add_executable(talker examples/talker.c  ${EXAMPLE_SRC})
   target_include_directories(talker PUBLIC ${EXAMPLE_INCLUDE})

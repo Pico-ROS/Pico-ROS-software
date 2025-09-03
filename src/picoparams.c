@@ -14,14 +14,14 @@
 /* Private typedef -----------------------------------------------------------*/
 
 typedef struct {
-    picoparams_interface_t interface;    /**< Parameter interface */
-    picoros_service_t get_srv;           /**< Get parameter service */
-    picoros_service_t list_srv;          /**< List parameters service */
-    picoros_service_t set_srv;           /**< Set parameter service */
-    picoros_service_t describe_srv;      /**< Describe parameter service */
-    picoros_service_t get_types_srv;     /**< Get parameter types service */
-    picoros_service_t set_atomic_srv;    /**< Set atomic parameter service */
-    ucdr_writer_t* current_writer;       /**< Current writer context */
+    picoparams_interface_t interface;         /**< Parameter interface */
+    picoros_srv_server_t   get_srv;           /**< Get parameter service */
+    picoros_srv_server_t   list_srv;          /**< List parameters service */
+    picoros_srv_server_t   set_srv;           /**< Set parameter service */
+    picoros_srv_server_t   describe_srv;      /**< Describe parameter service */
+    picoros_srv_server_t   get_types_srv;     /**< Get parameter types service */
+    picoros_srv_server_t   set_atomic_srv;    /**< Set atomic parameter service */
+    ucdr_writer_t*         current_writer;    /**< Current writer context */
 } picoparams_server_t;
 
 /* Private define ------------------------------------------------------------*/
@@ -391,7 +391,7 @@ static size_t describe_params(picoparams_server_t* server, ucdrBuffer* reader, u
 
 picoros_service_reply_t params_server_handler(uint8_t* request_data, size_t request_size, void* user_data) {
     picoros_service_reply_t reply = {};
-    picoros_service_t* s = (picoros_service_t*)user_data;
+    picoros_srv_server_t* s = (picoros_srv_server_t*)user_data;
 
     ucdrBuffer querry_writter = {};
     ucdrBuffer querry_reader = {};

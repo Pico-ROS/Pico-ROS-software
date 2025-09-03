@@ -28,7 +28,9 @@
 /** @} */
 
 /* Exported includes ---------------------------------------------------------*/
+
 #include <stdint.h>
+#include <stdbool.h>
 
 /* Exported constants --------------------------------------------------------*/
 /** @brief Maximum size for key expressions used in topic names @ingroup picoros */
@@ -89,25 +91,60 @@ typedef struct {
  * @param user_data User data passed during service registration
  * @return Service reply structure containing response data
  */
-typedef picoros_service_reply_t (*picoros_service_cb_t)(
-            uint8_t*  request_data,
-            size_t    reqest_size,
-            void*     user_data
-            );
+typedef picoros_service_reply_t (*picoros_srv_server_cb_t)(
+    uint8_t*  request_data,
+    size_t    reqest_size,
+    void*     user_data
+);
 
 /**
  * @brief Service server structure for Pico-ROS
  */
 typedef struct {
-    z_owned_queryable_t zqable;         /**< Zenoh queryable instance */
-    rmw_topic_t         topic;          /**< Topic information */
-    rmw_attachment_t    attachment;     /**< RMW attachment data */
-    void*              user_data;       /**< User data for callback */
-    picoros_service_cb_t user_callback; /**< User callback for service handling */
-} picoros_service_t;
+    z_owned_queryable_t      zqable;         /**< Zenoh queryable instance */
+    rmw_topic_t              topic;          /**< Topic information */
+    rmw_attachment_t         attachment;     /**< RMW attachment data */
+    void*                    user_data;      /**< User data for callback */
+    picoros_srv_server_cb_t  user_callback;  /**< User callback for service handling */
+} picoros_srv_server_t;
 
 /** @} */
 
+
+/** @} */
+
+/**
+ * @defgroup service_client Service client
+ * @ingroup picoros
+ * @{
+ */
+
+/**
+ * @brief Callback function type for service reply handling
+ * @param reply_data Pointer to received reply data (CDR encoded)
+ * @param reply_size Size of received reply
+ * @param error Received error reply
+ * @return void
+ */
+typedef void (*picoros_srv_client_cb_t)(
+    uint8_t*  reply_data,
+    size_t    reply_size,
+    bool      error
+);
+
+/**
+ * @brief Service client structure for Pico-ROS
+ */
+typedef struct {
+    char*                    node_name;             /**< Node name of service server */
+    uint32_t                 node_domain_id;        /**< Domain ID of service server */
+    rmw_topic_t              topic;                 /**< Topic information */
+    picoros_srv_client_cb_t  user_callback;         /**< User callback for service reply handling */
+    bool                     in_progress;           /**< Limit to one ongoing request */
+    z_get_options_t*         opts;                  /**< Request options */
+} picoros_srv_client_t;
+
+ /** @} */
 
 /**
  * @brief Publisher structure for Pico-ROS @ingroup picoros
@@ -258,7 +295,17 @@ picoros_res_t picoros_unsubscribe(picoros_subscriber_t *sub);
  * @return PICOROS_OK on success, error code otherwise
  * @ingroup service_server
  */
-picoros_res_t picoros_service_declare(picoros_node_t* node, picoros_service_t* srv);
+ picoros_res_t picoros_service_declare(picoros_node_t* node, picoros_srv_server_t* srv);
+
+ /**
+  * @brief Call service using service client.
+  * @param node Pointer to node instance
+  * @param srv Pointer to service configuration
+  * @return PICOROS_OK on success, error code otherwise
+  * @ingroup service_server
+  * @details client
+  */
+picoros_res_t picoros_service_call(picoros_srv_client_t* client, uint8_t* payload, size_t len);
 
 #ifdef __cplusplus
 }

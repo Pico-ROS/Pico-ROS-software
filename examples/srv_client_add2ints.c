@@ -1,6 +1,6 @@
 /*******************************************************************************
- * @file    srv_add2ints.c
- * @brief   Example service server node for picoros
+ * @file    srv_client_add2ints.c
+ * @brief   Example service client for picoros
  * @date    2025-May-27
  * 
  * @details This example demonstrates a ROS service server implementation that
@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include "picoros.h"
 #include "picoserdes.h"
+#include "zenoh-pico/system/common/platform.h"
 
 // Use command line arguments to change default values
 #define MODE        "client"
@@ -21,47 +22,34 @@
 // Common utils
 extern int picoros_parse_args(int argc, char **argv,  picoros_interface_t* ifx);
 
-// Service callback
-picoros_service_reply_t add2_srv_cb(uint8_t* request, size_t size, void* user_data);
-
-// Static buffer for service reply serialization, used from zenoh threads
-uint8_t srv_buf[1024];
+// Service reply callback
+void add2_client_cb(uint8_t* reply_data, size_t reply_size,  bool error);
 
 // Example service
-picoros_service_t add2_srv = {
+picoros_srv_client_t add2_client = {
+    .node_name = "add_two_ints",
     .topic = {
-        .name = "add2",
         .type = ROSTYPE_NAME(srv_AddTwoInts),
         .rihs_hash = ROSTYPE_HASH(srv_AddTwoInts),
     },
-    .user_callback = add2_srv_cb,
+    .user_callback = add2_client_cb,
+    // .opts = &(z_get_options_t){
+    //     .timeout_ms = 2000,
+    //     .consolidation.mode = Z_CONSOLIDATION_MODE_MONOTONIC,
+    //     .congestion_control = Z_CONGESTION_CONTROL_BLOCK,
+    // },
 };
 
-// Example node
-picoros_node_t node = {
-    .name = "picoros",
-};
-
-// Service callback
-picoros_service_reply_t add2_srv_cb(uint8_t* rx_data, size_t rx_size, void* user_data){
-    // request, response structs
-    request_srv_AddTwoInts request = {};
+void add2_client_cb(uint8_t* reply_data, size_t reply_size,  bool error){
+    if (error){
+        printf("Service error reply recieved\n");
+        return; 
+    }
     reply_srv_AddTwoInts response = {};
-    // deserialize request
-    ps_deserialize(rx_data, &request, rx_size);
-    // apply service
-    response.sum = request.a + request.b;
-    printf("Service add2(a:%ld, b:%ld) called. Sending reply sum:%ld\n", request.a, request.b, response.sum);
-    // serialize reply
-    size_t len = ps_serialize(srv_buf, &response , 1024);
-    // send reply
-    picoros_service_reply_t reply = {
-        .length = len,
-        .data = srv_buf,
-        .free_callback = NULL, // no need to free static buffer
-    };
-    return reply;
+    ps_deserialize(reply_data, &response, reply_size);
+    printf("Got reply - sum: %ld\n", response.sum);
 }
+
 
 int main(int argc, char **argv){
     picoros_interface_t ifx = {
@@ -78,13 +66,17 @@ int main(int argc, char **argv){
         printf("Waiting RMW init...\n");
         z_sleep_s(1);
     }
-    printf("Starting Pico-ROS node %s domain:%d\n", node.name, node.domain_id);
-    picoros_node_init(&node);
-
-    printf("Declaring service on %s\n", add2_srv.topic.name);
-    picoros_service_declare(&node, &add2_srv);
-
+    
+    int a = 0;
+    int b = 100;
     while(true){
+        uint8_t buf[100];
+        request_srv_AddTwoInts request = {.a=a, b=b};
+        size_t len = ps_serialize(buf, &request, 100);
+        if (picoros_service_call(&add2_client, buf, len) == PICOROS_OK){
+            printf("Sent service call...\n");
+            a++;
+        }
         z_sleep_s(1);
     }
     return 0;

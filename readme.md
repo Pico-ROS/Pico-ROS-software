@@ -56,7 +56,8 @@ The project includes several example applications demonstrating different featur
 
   - `talker.c` & `talker.cpp`: Basic publisher example
   - `listener.c`: Basic subscriber example
-  - `srv_add2ints.c`: Service server example
+  - `srv_server_add2ints.c`: Service server example
+  - `srv_client_add2ints.c`: Service client example
   - `params_server.c`: Parameter server implementation
   - `odometry_publisher.c` & `odometry_listener.c`: ROS odometry message handling
   - `batteryState_publisher.c` BatteryState message with sequence fields.
