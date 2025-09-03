@@ -198,16 +198,14 @@ static void queriable_data_handler(z_loaned_query_t *query, void *arg) {
 static void queriable_drop_handler(void* arg) { _PR_LOG("Drop srv callback\n"); }
 
 static void get_drop_handler(void* ctx){
-    _PR_LOG("Drop get callback\n");
     picoros_srv_client_t* client = (picoros_srv_client_t*)ctx;
-    client->in_progress = false;
+    client->_in_progress = false;
 }
 
 static void get_data_handler(z_loaned_reply_t *reply, void *ctx){
     if (ctx == NULL){
         return;
     }
-    _PR_LOG("Get data handler\n");
     size_t raw_data_len = 0;
     uint8_t* raw_data  = 0;
     bool error = false;
@@ -428,7 +426,7 @@ picoros_res_t picoros_service_declare(picoros_node_t* node, picoros_srv_server_t
 
 picoros_res_t picoros_service_call(picoros_srv_client_t * client, uint8_t* payload, size_t len){
     if (client == NULL) { return PICOROS_ERROR;}
-    if (client->in_progress) { return PICOROS_NOT_READY;}
+    if (client->_in_progress) { return PICOROS_NOT_READY;}
 
     z_result_t res;
     char keyexpr[KEYEXPR_SIZE];
@@ -462,7 +460,7 @@ picoros_res_t picoros_service_call(picoros_srv_client_t * client, uint8_t* paylo
 
     // RMW attachment
     rmw_attachment_t attachment = {
-        .rmw_gid_size = 16,
+        .rmw_gid_size = RMW_GID_SIZE,
         .sequence_number = 1,
         .time = z_clock_now().tv_nsec,
     };
@@ -474,15 +472,19 @@ picoros_res_t picoros_service_call(picoros_srv_client_t * client, uint8_t* paylo
     z_owned_closure_reply_t callback;
     z_closure(&callback, get_data_handler, get_drop_handler, client);
 
-    client->in_progress = true;
+    client->_in_progress = true;
     if ((res = z_get(z_session_loan(&s_wrapper), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&callback), opts)) != Z_OK) {
         _PR_LOG("Error calling %s service! Error:%d\n", client->topic.name, res);
-        client->in_progress = false;
+        client->_in_progress = false;
         z_drop(opts->attachment);
         z_drop(opts->payload);
         return PICOROS_ERROR;
     }
     return PICOROS_OK;
+}
+
+bool picoros_service_call_in_progress(picoros_srv_client_t* client){
+    return client->_in_progress;
 }
 
 picoros_res_t picoros_unsubscribe(picoros_subscriber_t* sub) {

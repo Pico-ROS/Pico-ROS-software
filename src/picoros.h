@@ -42,7 +42,7 @@
 
 /* Exported types ------------------------------------------------------------*/
 
- /**
+/**
  * @defgroup rmw RMW support
  * @ingroup picoros
  * @{
@@ -69,7 +69,7 @@ typedef struct {
 
 /** @} */
 
- /**
+/**
  * @defgroup service_server Service server
  * @ingroup picoros
  * @{
@@ -111,8 +111,6 @@ typedef struct {
 /** @} */
 
 
-/** @} */
-
 /**
  * @defgroup service_client Service client
  * @ingroup picoros
@@ -140,11 +138,11 @@ typedef struct {
     uint32_t                 node_domain_id;        /**< Domain ID of service server */
     rmw_topic_t              topic;                 /**< Topic information */
     picoros_srv_client_cb_t  user_callback;         /**< User callback for service reply handling */
-    bool                     in_progress;           /**< Limit to one ongoing request */
-    z_get_options_t*         opts;                  /**< Request options */
+    bool                     _in_progress;          /**< Private flag used to limit to one ongoing request */
+    z_get_options_t*         opts;                  /**< Request options, if NULL default options are used */
 } picoros_srv_client_t;
 
- /** @} */
+/** @} */
 
 /**
  * @brief Publisher structure for Pico-ROS @ingroup picoros
@@ -163,6 +161,7 @@ typedef struct {
  * @ingroup picoros
  * @{
  */
+
 /**
  * @brief Callback function type for subscriber data handling
  * @param rx_data Pointer to received data buffer (CDR encoded)
@@ -201,12 +200,12 @@ typedef struct {
 
 /** @} */
 
-
 /**
  * @defgroup interface Network interface
  * @ingroup picoros
  * @{
  */
+
 /**
  * @brief Network interface configuration
  */
@@ -216,8 +215,6 @@ typedef struct {
 } picoros_interface_t;
 
 /** @} */
-
-
 
 /**
  * @brief Result codes for Pico-ROS operations @ingroup picoros
@@ -295,17 +292,25 @@ picoros_res_t picoros_unsubscribe(picoros_subscriber_t *sub);
  * @return PICOROS_OK on success, error code otherwise
  * @ingroup service_server
  */
- picoros_res_t picoros_service_declare(picoros_node_t* node, picoros_srv_server_t* srv);
+picoros_res_t picoros_service_declare(picoros_node_t* node, picoros_srv_server_t* srv);
 
- /**
-  * @brief Call service using service client.
-  * @param node Pointer to node instance
-  * @param srv Pointer to service configuration
-  * @return PICOROS_OK on success, error code otherwise
-  * @ingroup service_server
-  * @details client
-  */
+/**
+ * @brief Call service using service client.
+ * @param client Pointer to client instance. Should be in scope until service call is ongoing.
+ * @param payload Pointer to data payload
+ * @param len Size of data
+ * @return PICOROS_OK on success, PICOROS_NOT_READY when request already progress, error code otherwise
+ * @ingroup service_client
+ */
 picoros_res_t picoros_service_call(picoros_srv_client_t* client, uint8_t* payload, size_t len);
+  
+/**
+ * @brief Check if client has ongoing service call.
+ * @param client Pointer to client instance.
+ * @return true if request is in progress
+ * @ingroup service_client
+ */
+bool picoros_service_call_in_progress(picoros_srv_client_t* client);
 
 #ifdef __cplusplus
 }
