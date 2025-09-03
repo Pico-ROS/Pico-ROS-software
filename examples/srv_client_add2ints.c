@@ -1,10 +1,10 @@
 /*******************************************************************************
  * @file    srv_client_add2ints.c
  * @brief   Example service client for picoros
- * @date    2025-May-27
+ * @date    2025-Sept-2
  * 
- * @details This example demonstrates a ROS service server implementation that
- *          provides an "add two integers" service functionality.
+ * @details This example demonstrates a ROS service client implementation that
+ *          calls an "add two integers" service and prints the result.
  * 
  * @copyright Copyright (c) 2025 Ubiquity Robotics
  *******************************************************************************/
