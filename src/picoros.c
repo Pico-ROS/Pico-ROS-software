@@ -2,11 +2,11 @@
  * @file    picoros.c
  * @brief   Pico-ROS Core Implementation
  * @date    2025-May-27
- * 
+ *
  * @details This file implements the core functionality of Pico-ROS, including
  *          node management, publisher/subscriber communication, and service
  *          server implementation.
- * 
+ *
  * @copyright Copyright (c) 2025 Ubiquity Robotics
  *******************************************************************************/
 
@@ -164,7 +164,7 @@ static void queriable_data_handler(z_loaned_query_t *query, void *arg) {
     _z_bytes_to_buf(b, rx_data, rx_data_len);
 
     // process
-    picoros_service_reply_t reply = srv->user_callback(rx_data, rx_data_len, srv->user_data);
+    picoros_service_reply_t reply = srv->user_callback(srv, rx_data, rx_data_len);
 
     if (reply.data) {
         // move reply to zbytes
@@ -200,6 +200,9 @@ static void queriable_drop_handler(void* arg) { _PR_LOG("Drop srv callback\n"); 
 static void get_drop_handler(void* ctx){
     picoros_srv_client_t* client = (picoros_srv_client_t*)ctx;
     client->_in_progress = false;
+    if(client->drop_callback != NULL){
+        client->drop_callback(client);
+    }
 }
 
 static void get_data_handler(z_loaned_reply_t *reply, void *ctx){
@@ -231,7 +234,7 @@ static void get_data_handler(z_loaned_reply_t *reply, void *ctx){
     _z_bytes_to_buf(payload, raw_data, raw_data_len);
 
     picoros_srv_client_t* client = (picoros_srv_client_t*)ctx;
-    client->user_callback(raw_data, raw_data_len, error);
+    client->user_callback(client, raw_data, raw_data_len, error);
     z_free(raw_data);
 }
 

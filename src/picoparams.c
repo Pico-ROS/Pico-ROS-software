@@ -2,10 +2,10 @@
  * @file    picoparams.c
  * @brief   Pico-ROS Parameter Server Implementation
  * @date    2025-Jun-01
- * 
+ *
  * @details This file implements the ROS 2 parameter server functionality,
  *          providing parameter storage, retrieval, and manipulation capabilities.
- * 
+ *
  * @copyright Copyright (c) 2025 Ubiquity Robotics
  *******************************************************************************/
 
@@ -28,7 +28,7 @@ typedef struct {
 /* Private macro -------------------------------------------------------------*/
 /* Private constants ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
-picoros_service_reply_t params_server_handler(uint8_t* request_data, size_t request_size, void* user_data);
+picoros_service_reply_t params_server_handler(picoros_srv_server_t* server, uint8_t* request_data, size_t request_size);
 
 /* Private variables ---------------------------------------------------------*/
 /* Parameter topic names and hashes */
@@ -40,7 +40,6 @@ picoparams_server_t pserver = {
             .rihs_hash = "bf9803d5c74cf989a5de3e0c2e99444599a627c7ff75f97b8c05b01003675cbc",
         },
         .user_callback = params_server_handler,
-        .user_data = &pserver.get_srv,
     },
     .list_srv = {
         .topic = {
@@ -49,7 +48,6 @@ picoparams_server_t pserver = {
             .rihs_hash = "3e6062bfbb27bfb8730d4cef2558221f51a11646d78e7bb30a1e83afac3aad9d",
         },
         .user_callback = params_server_handler,
-        .user_data = &pserver.list_srv,
     },
     .set_srv = {
         .topic = {
@@ -58,7 +56,6 @@ picoparams_server_t pserver = {
             .rihs_hash = "56eed9a67e169f9cb6c1f987bc88f868c14a8fc9f743a263bc734c154015d7e0",
         },
         .user_callback = params_server_handler,
-        .user_data = &pserver.set_srv,
     },
     .describe_srv = {
         .topic = {
@@ -67,7 +64,6 @@ picoparams_server_t pserver = {
             .rihs_hash = "845b484d71eb0673dae682f2e3ba3c4851a65a3dcfb97bddd82c5b57e91e4cff",
         },
         .user_callback = params_server_handler,
-        .user_data = &pserver.describe_srv,
     },
     .set_atomic_srv = {
         .topic = {
@@ -76,7 +72,6 @@ picoparams_server_t pserver = {
             .rihs_hash = "0e192ef259c07fc3c07a13191d27002222e65e00ccec653ca05e856f79285fcd",
         },
         .user_callback = params_server_handler,
-        .user_data = &pserver.set_atomic_srv,
     },
     .get_types_srv = {
         .topic = {
@@ -85,7 +80,6 @@ picoparams_server_t pserver = {
             .rihs_hash = "da199c878688b3e530bdfe3ca8f74cb9fa0c303101e980a9e8f260e25e1c80ca",
         },
         .user_callback = params_server_handler,
-        .user_data = &pserver.get_types_srv,
     },
 };
 
@@ -389,9 +383,8 @@ static size_t describe_params(picoparams_server_t* server, ucdrBuffer* reader, u
 
 
 
-picoros_service_reply_t params_server_handler(uint8_t* request_data, size_t request_size, void* user_data) {
+picoros_service_reply_t params_server_handler(picoros_srv_server_t* server, uint8_t* request_data, size_t request_size) {
     picoros_service_reply_t reply = {};
-    picoros_srv_server_t* s = (picoros_srv_server_t*)user_data;
 
     ucdrBuffer querry_writter = {};
     ucdrBuffer querry_reader = {};
@@ -399,22 +392,22 @@ picoros_service_reply_t params_server_handler(uint8_t* request_data, size_t requ
     *((uint32_t*)pserver.interface.reply_buf) = 0x0100;
     ucdr_init_buffer(&querry_writter, pserver.interface.reply_buf + 4, pserver.interface.reply_buf_size - 4);
     size_t ret = 0;
-    if (s == &pserver.list_srv){
+    if (server == &pserver.list_srv){
         ret = list_params(&pserver, &querry_reader, &querry_writter);
     }
-    else if(s == &pserver.describe_srv){
+    else if(server == &pserver.describe_srv){
         ret = describe_params(&pserver, &querry_reader, &querry_writter);
     }
-    else if(s == &pserver.get_srv){
+    else if(server == &pserver.get_srv){
         ret = get_params_value(&pserver, &querry_reader, &querry_writter);
     }
-    else if(s == &pserver.set_srv){
+    else if(server == &pserver.set_srv){
         ret = set_params_value(&pserver, &querry_reader, &querry_writter);
     }
-    else if(s == &pserver.get_types_srv){
+    else if(server == &pserver.get_types_srv){
         ret = get_params_type(&pserver, &querry_reader, &querry_writter);
     }
-    else if(s == &pserver.set_atomic_srv){
+    else if(server == &pserver.set_atomic_srv){
         // Not implemented
     }
 

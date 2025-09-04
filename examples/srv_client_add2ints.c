@@ -2,13 +2,13 @@
  * @file    srv_client_add2ints.c
  * @brief   Example service client for picoros
  * @date    2025-Sept-2
- * 
+ *
  * @details This example demonstrates a ROS service client implementation that
  *          calls an "add two integers" service and prints the result.
- * 
+ *
  * @copyright Copyright (c) 2025 Ubiquity Robotics
  *******************************************************************************/
-  
+
 #include <stdio.h>
 #include <stdint.h>
 #include "picoros.h"
@@ -23,7 +23,7 @@
 extern int picoros_parse_args(int argc, char **argv,  picoros_interface_t* ifx);
 
 // Service reply callback
-void add2_client_cb(uint8_t* reply_data, size_t reply_size,  bool error);
+void add2_client_cb(picoros_srv_client_t* client, uint8_t* reply_data, size_t reply_size,  bool error);
 
 // Example service
 picoros_srv_client_t add2_client = {
@@ -40,10 +40,10 @@ picoros_srv_client_t add2_client = {
     // },
 };
 
-void add2_client_cb(uint8_t* reply_data, size_t reply_size,  bool error){
+void add2_client_cb(picoros_srv_client_t* client, uint8_t* reply_data, size_t reply_size,  bool error){
     if (error){
         printf("Service error reply recieved\n");
-        return; 
+        return;
     }
     reply_srv_AddTwoInts response = {};
     ps_deserialize(reply_data, &response, reply_size);
@@ -66,7 +66,7 @@ int main(int argc, char **argv){
         printf("Waiting RMW init...\n");
         z_sleep_s(1);
     }
-    
+
     int a = 0;
     int b = 100;
     while(true){
