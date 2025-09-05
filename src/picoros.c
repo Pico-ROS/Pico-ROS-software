@@ -472,15 +472,18 @@ picoros_res_t picoros_service_call(picoros_srv_client_t * client, uint8_t* paylo
     opts->attachment = z_bytes_move(&tx_attachment);
 
     // Closure
-    z_owned_closure_reply_t callback;
-    z_closure(&callback, get_data_handler, get_drop_handler, client);
+    z_owned_closure_reply_t callback = {
+        ._val.call = get_data_handler,
+        ._val.drop = get_drop_handler,
+        ._val.context = client,
+    };
 
     client->_in_progress = true;
     if ((res = z_get(z_session_loan(&s_wrapper), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&callback), opts)) != Z_OK) {
         _PR_LOG("Error calling %s service! Error:%d\n", client->topic.name, res);
         client->_in_progress = false;
-        z_drop(opts->attachment);
-        z_drop(opts->payload);
+        z_bytes_drop(opts->attachment);
+        z_bytes_drop(opts->payload);
         return PICOROS_ERROR;
     }
     return PICOROS_OK;
