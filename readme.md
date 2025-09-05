@@ -1,9 +1,11 @@
 <p align="center">
   <img src="docs/picoROS.png" alt="PicoROS logo" style="width:100;">
-</p> 
+</p>
 
 ## Overview
 **Pico-ROS** is a lightweight ROS (Robot Operating System) client implementation designed for resource-constrained devices. Built on top of [zenoh-pico](https://github.com/eclipse-zenoh/zenoh-pico) and working in conjunction with [rmw-zenoh](https://github.com/ros2/rmw_zenoh), it provides an easy-to-use interface to ROS host from embedded systems.
+
+Pico-ROS targets resource-constrained microcontroller-based nodes and edge devices in ROS networks.
 
 ## Features
 
@@ -15,6 +17,7 @@
      - Publisher
      - Subscriber
      - Service server
+     - Service client
 
 2. **picoserdes**
    - CDR serialization/deserialization for ROS messages
@@ -112,23 +115,24 @@ The project uses Doxygen for documentation. To generate and read:
    xdg-open docs/generated/html/index.html
    ```
 
-## Use Cases
-
-Pico-ROS is ideal for resource-constrained microcontroller-based ROS nodes and edge devices in ROS networks.
-
-While it provides core ROS functionality, it's not intended to replace full ROS implementations like [rclc](https://github.com/ros2/rclc) or [rclcpp](https://github.com/ros2/rclcpp) for systems with more resources.
 
 ## Using in your project
 
-See the examples directory for implementation references. 
+See the [examples](examples/) directory for implementation references.
 
 Automatic generation of `user_types.h` file can be done using scripts in [/tools/type-gen](tools/type-gen/readme.md). Format of the file is descibed in [picoserdes.h](src/picoserdes.h). Example with standard ROS types can be found in [example_types.h](examples/example_types.h).
 
-For compatibility with `rmw_zenohd` default configuration, set matching zenoh-pico lease duration settings with defines or edit the zenoh-pico `config.h` file: 
+For compatibility with `rmw_zenohd` default configuration, set matching zenoh-pico lease duration settings with defines or edit the zenoh-pico `config.h` file:
  - `-DZ_TRANSPORT_LEASE=60000` and
  - `-DZ_TRANSPORT_LEASE_EXPIRE_FACTOR=2`
 
-Examples of projects using Pico-ROS can be found in [picoros-examples](https://github.com/Pico-ROS/picoros-examples).
+## Example projects
+
+- [picoros-examples](https://github.com/Pico-ROS/picoros-examples)
+- [roscon2025_control_workshop](https://github.com/ros-controls/roscon2025_control_workshop)
+
+Help us add more!
+
 
 ## License
 
