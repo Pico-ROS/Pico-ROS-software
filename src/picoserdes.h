@@ -322,14 +322,14 @@ BASE_TYPES_LIST(PS_DES_FUNC_DEF)
     ({                                                                                              \
         ucdrBuffer writer = {};                                                                     \
         *((uint32_t*)pBUF) =  0x0100; /*Little endian header*/                                      \
-        ucdr_init_buffer(&writer, pBUF+4, MAX-4);                                                   \
+        ucdr_init_buffer(&writer, pBUF + sizeof(uint32_t), MAX - sizeof(uint32_t));                 \
         _Generic((pMSG),                                                                            \
             PS_DEFER(BASE_TYPES_LIST_INDIRECT)(PS_SEL_SER)                                          \
             PS_DEFER(MSG_LIST_INDIRECT)(PS_UNUSED, PS_SEL_SER, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)     \
             PS_DEFER(SRV_LIST_INDIRECT)(PS_SEL_SRV_SER, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED) \
             default: 0                                                                              \
         )(&writer, pMSG);                                                                           \
-        size_t _ret = ucdr_buffer_length(&writer) + 4;                                              \
+        size_t _ret = ucdr_buffer_length(&writer) + sizeof(uint32_t);                               \
         _ret;                                                                                       \
     })
 /**
@@ -458,9 +458,10 @@ void ucdr_seq_end(ucdr_writer_t* writer);
     inline size_t ps_serialize(uint8_t* pBUF, TYPE* pMSG, size_t MAX) {    \
         ucdrBuffer writer = {};                                            \
         *((uint32_t*)pBUF) = 0x0100; /* Little endian header */            \
-        ucdr_init_buffer(&writer, pBUF + 4, MAX - 4);                      \
+        ucdr_init_buffer(&writer, pBUF + sizeof(uint32_t),                 \
+                        MAX - sizeof(uint32_t));                           \
         ps_ser_##TYPE(&writer, pMSG);                                      \
-        return ucdr_buffer_length(&writer) + 4;                            \
+        return ucdr_buffer_length(&writer) + sizeof(uint32_t);             \
     }
 
 #define PS_CPP_DES_OVERLOAD(TYPE, ...)                                     \
@@ -483,16 +484,18 @@ MSG_LIST(PS_UNUSED, PS_CPP_DES_OVERLOAD, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNU
     inline size_t ps_serialize(uint8_t* pBUF, request_##TYPE* pMSG, size_t MAX) { \
         ucdrBuffer writer = {};                                             \
         *((uint32_t*)pBUF) = 0x0100;                                        \
-        ucdr_init_buffer(&writer, pBUF + 4, MAX - 4);                       \
+        ucdr_init_buffer(&writer, pBUF + sizeof(uint32_t),                  \
+                        MAX - sizeof(uint32_t));                            \
         ps_ser_##TYPE##_request(&writer, pMSG);                             \
-        return ucdr_buffer_length(&writer) + 4;                             \
+        return ucdr_buffer_length(&writer) + sizeof(uint32_t);              \
     }                                                                       \
     inline size_t ps_serialize(uint8_t* pBUF, reply_##TYPE* pMSG, size_t MAX) { \
         ucdrBuffer writer = {};                                             \
         *((uint32_t*)pBUF) = 0x0100;                                        \
-        ucdr_init_buffer(&writer, pBUF + 4, MAX - 4);                       \
+        ucdr_init_buffer(&writer, pBUF + sizeof(uint32_t),                  \
+                        MAX - sizeof(uint32_t));                            \
         ps_ser_##TYPE##_reply(&writer, pMSG);                               \
-        return ucdr_buffer_length(&writer) + 4;                             \
+        return ucdr_buffer_length(&writer) + sizeof(uint32_t);              \
     }
 
 #define PS_CPP_SRV_DES_OVERLOAD(TYPE, NAME, HASH, ...)                      \

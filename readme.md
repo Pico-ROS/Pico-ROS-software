@@ -46,8 +46,9 @@
    ```
 
 #### Build Options
-- Custom type definitions: `-DUSER_TYPE_FILE="user_types.h"`
+- Custom type definitions: `-DUSER_TYPE_FILE=user_types.h`
 - Disable examples: `-DPICOROS_BUILD_EXAMPLES=OFF`
+- Disable tests: `-DPICOROS_BUILD_TESTS=OFF`
 
 ### Examples
 
@@ -120,11 +121,13 @@ While it provides core ROS functionality, it's not intended to replace full ROS 
 
 See the examples directory for implementation references. 
 
-Automatic generation of `user_types.h` file can be done using scripts in [/tools/type-gen](tools/type-gen/readme.md). Format of the file is descibed in `picoserdes.h`.
+Automatic generation of `user_types.h` file can be done using scripts in [/tools/type-gen](tools/type-gen/readme.md). Format of the file is descibed in [picoserdes.h](src/picoserdes.h). Example with standard ROS types can be found in [example_types.h](examples/example_types.h).
 
 For compatibility with `rmw_zenohd` default configuration, set matching zenoh-pico lease duration settings with defines or edit the zenoh-pico `config.h` file: 
  - `-DZ_TRANSPORT_LEASE=60000` and
  - `-DZ_TRANSPORT_LEASE_EXPIRE_FACTOR=2`
+
+Examples of projects using Pico-ROS can be found in [picoros-examples](https://github.com/Pico-ROS/picoros-examples).
 
 ## License
 
