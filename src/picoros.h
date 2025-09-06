@@ -116,6 +116,7 @@ typedef struct {
     z_owned_publisher_t zpub;       /**< Zenoh publisher instance */
     rmw_attachment_t   attachment;  /**< RMW attachment data */
     rmw_topic_t        topic;       /**< Topic information */
+    z_publisher_options_t opts;     /**< Topic options, if NULL default options are used */
 } picoros_publisher_t;
 
 /** @} */
