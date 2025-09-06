@@ -65,7 +65,17 @@ static int rmw_zenoh_node_liveliness_keyexpr(picoros_node_t* node, char* keyexpr
 }
 
 static int rmw_zenoh_topic_keyexpr(picoros_node_t* node, rmw_topic_t* topic, char* keyexpr) {
-    return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s/%s_/RIHS01_%s", node->domain_id, topic->name, topic->type,
+    char topic_lv[96];
+    char *str = &topic_lv[0];
+    strncpy(topic_lv, topic->name, 95);
+    // replace / with %
+    while (*str) {
+        if (*str == '/') {
+            *str = '%';
+        }
+        str++;
+    }
+    return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s/%s_/RIHS01_%s", node->domain_id, topic_lv, topic->type,
                     topic->rihs_hash);
 }
 
@@ -75,8 +85,18 @@ static int rmw_zenoh_service_keyexpr(picoros_node_t* node, rmw_topic_t* topic, c
          topic->type, topic->rihs_hash);
     }
     else{
-       return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s/%s/%s_/RIHS01_%s", node->domain_id, node->name, topic->name,
-        topic->type, topic->rihs_hash);
+        char topic_lv[96];
+        char *str = &topic_lv[0];
+        strncpy(topic_lv, topic->name, 95);
+        // replace / with %
+        while (*str) {
+            if (*str == '/') {
+                *str = '%';
+            }
+            str++;
+        }
+        return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s/%s/%s_/RIHS01_%s", node->domain_id, topic_lv, topic->name,
+                            topic->type, topic->rihs_hash);
     }
 }
 

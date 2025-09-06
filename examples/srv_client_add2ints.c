@@ -13,7 +13,6 @@
 #include <stdint.h>
 #include "picoros.h"
 #include "picoserdes.h"
-#include "zenoh-pico/system/common/platform.h"
 
 // Use command line arguments to change default values
 #define MODE        "client"
@@ -27,8 +26,9 @@ void add2_client_cb(picoros_srv_client_t* client, uint8_t* reply_data, size_t re
 
 // Example service
 picoros_srv_client_t add2_client = {
-    .node_name = "add_two_ints",
+    .node_name = "picoros",
     .topic = {
+        .name = "services/add2",
         .type = ROSTYPE_NAME(srv_AddTwoInts),
         .rihs_hash = ROSTYPE_HASH(srv_AddTwoInts),
     },

@@ -30,7 +30,7 @@ uint8_t srv_buf[1024];
 // Example service
 picoros_srv_server_t add2_srv = {
     .topic = {
-        .name = "add2",
+        .name = "services/add2",
         .type = ROSTYPE_NAME(srv_AddTwoInts),
         .rihs_hash = ROSTYPE_HASH(srv_AddTwoInts),
     },
