@@ -33,8 +33,10 @@
 #include <stdbool.h>
 
 /* Exported constants --------------------------------------------------------*/
-/** @brief Maximum size for key expressions used in topic names @ingroup picoros */
+/** @brief Maximum size for key expressions used in rmw topic names @ingroup picoros */
 #define KEYEXPR_SIZE 400u
+/** @brief Maximum size for fully_qualified_name @ingroup picoros */
+#define TOPIC_MAX_NAME 124u
 /** @brief Size of RMW GID (Global Identifier) */
 #define RMW_GID_SIZE 16u
 /** @brief Flag to enable/disable node GUID usage @ingroup picoros*/

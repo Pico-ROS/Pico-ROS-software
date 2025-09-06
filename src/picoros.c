@@ -65,37 +65,17 @@ static int rmw_zenoh_node_liveliness_keyexpr(picoros_node_t* node, char* keyexpr
 }
 
 static int rmw_zenoh_topic_keyexpr(picoros_node_t* node, rmw_topic_t* topic, char* keyexpr) {
-    char topic_lv[96];
-    char *str = &topic_lv[0];
-    strncpy(topic_lv, topic->name, 95);
-    // replace / with %
-    while (*str) {
-        if (*str == '/') {
-            *str = '%';
-        }
-        str++;
-    }
-    return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s/%s_/RIHS01_%s", node->domain_id, topic_lv, topic->type,
+    return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s/%s_/RIHS01_%s", node->domain_id, topic->name, topic->type,
                     topic->rihs_hash);
 }
 
 static int rmw_zenoh_service_keyexpr(picoros_node_t* node, rmw_topic_t* topic, char* keyexpr) {
-    char topic_lv[96];
-    char *str = &topic_lv[0];
-    strncpy(topic_lv, topic->name, 95);
-    // replace / with %
-    while (*str) {
-        if (*str == '/') {
-            *str = '%';
-        }
-        str++;
-    }
     if (node->name == NULL){
-        return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s/%s_/RIHS01_%s", node->domain_id, topic_lv,
+        return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s/%s_/RIHS01_%s", node->domain_id, topic->name,
                             topic->type, topic->rihs_hash);
     }
     else{
-        return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s%%%s/%s_/RIHS01_%s", node->domain_id, node->name, topic_lv,
+        return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s%%%s/%s_/RIHS01_%s", node->domain_id, node->name, topic->name,
                             topic->type, topic->rihs_hash);
     }
 }
@@ -104,17 +84,18 @@ static int rmw_zenoh_topic_liveliness_keyexpr(picoros_node_t* node, rmw_topic_t*
 #if USE_NODE_GUID == 1
     uint8_t* guid = node->guid;
 #endif
-    char topic_lv[96];
+    char topic_lv[TOPIC_MAX_NAME];
+    topic_lv[TOPIC_MAX_NAME-1] = 0;
     char *str = &topic_lv[0];
 
     z_id_t id = z_info_zid(z_session_loan(&s_wrapper));
 
-    if (strcmp(entity_str, "SS") == 0){
-        // is service
-        snprintf(topic_lv, 95, "%s/%s", node->name, topic->name);
+    if (strcmp(entity_str, "SS") == 0 && node->name != NULL){
+        // is service and node name is set
+        snprintf(topic_lv, TOPIC_MAX_NAME-1, "%s/%s", node->name, topic->name);
     }
     else{
-        strncpy(topic_lv, topic->name, 95);
+        strncpy(topic_lv, topic->name, TOPIC_MAX_NAME-1);
     }
 
     // replace / with %
