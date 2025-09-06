@@ -447,25 +447,36 @@ picoros_res_t picoros_service_declare(picoros_node_t* node, picoros_srv_server_t
     return PICOROS_OK;
 }
 
-picoros_res_t picoros_service_call(picoros_srv_client_t * client, uint8_t* payload, size_t len){
-    if (client == NULL) { return PICOROS_ERROR;}
-    if (client->_in_progress) { return PICOROS_NOT_READY;}
 
-    z_result_t res;
-    char keyexpr[KEYEXPR_SIZE];
-
+picoros_res_t picoros_service_client_init(picoros_srv_client_t * client){
+    if (client->_key_buf == NULL){
+        client->_key_buf = z_malloc(KEYEXPR_SIZE);
+    }
     // Generate key expressions
-    z_view_keyexpr_t ke;
     if (client->topic.type != NULL) {
         picoros_node_t node = {
             .domain_id = client->node_domain_id,
             .name = client->node_name,
         };
-        rmw_zenoh_service_keyexpr(&node, &client->topic, keyexpr);
-        z_view_keyexpr_from_str_unchecked(&ke, keyexpr);
+        rmw_zenoh_service_keyexpr(&node, &client->topic, client->_key_buf);
+        z_view_keyexpr_from_str_unchecked(&client->ke, client->_key_buf);
     }
     else {
-        z_view_keyexpr_from_str_unchecked(&ke, client->topic.name);
+        z_view_keyexpr_from_str_unchecked(&client->ke, client->topic.name);
+    }
+    return PICOROS_OK;
+}
+
+
+picoros_res_t picoros_service_call(picoros_srv_client_t * client, uint8_t* payload, size_t len){
+    if (client == NULL) { return PICOROS_ERROR;}
+    if (client->_in_progress) { return PICOROS_NOT_READY;}
+
+    z_result_t res;
+
+    // create key expression if not done before
+    if (client->_key_buf == NULL){
+        picoros_service_client_init(client);
     }
 
     // Default options
@@ -499,7 +510,7 @@ picoros_res_t picoros_service_call(picoros_srv_client_t * client, uint8_t* paylo
     };
 
     client->_in_progress = true;
-    if ((res = z_get(z_session_loan(&s_wrapper), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&callback), opts)) != Z_OK) {
+    if ((res = z_get(z_session_loan(&s_wrapper), z_view_keyexpr_loan(&client->ke), "", z_closure_reply_move(&callback), opts)) != Z_OK) {
         _PR_LOG("Error calling %s service! Error:%d\n", client->topic.name, res);
         client->_in_progress = false;
         z_bytes_drop(opts->attachment);

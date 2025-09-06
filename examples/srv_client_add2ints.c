@@ -67,6 +67,8 @@ int main(int argc, char **argv){
         z_sleep_s(1);
     }
 
+    picoros_service_client_init(&add2_client);
+
     int a = 0;
     int b = 100;
     while(true){
@@ -77,7 +79,7 @@ int main(int argc, char **argv){
             printf("Sent service call...\n");
             a++;
         }
-        z_sleep_s(1);
+        z_sleep_ms(100);
     }
     return 0;
 }

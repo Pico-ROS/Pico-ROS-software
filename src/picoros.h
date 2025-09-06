@@ -152,6 +152,8 @@ typedef struct picoros_srv_client_s{
     bool                          _in_progress;          /**< Private flag used to limit to one ongoing request */
     z_get_options_t*              opts;                  /**< Request options, if NULL default options are used */
     void*                         user_data;             /**< User data, not used by picoros */
+    z_view_keyexpr_t              ke;                    /**< Precomputed when creating the client */
+    char*                         _key_buf;              /**< Private buffer for key expresion */
 } picoros_srv_client_t;
 
 /** @} */
@@ -303,6 +305,16 @@ picoros_res_t picoros_unsubscribe(picoros_subscriber_t *sub);
  * @ingroup service_server
  */
 picoros_res_t picoros_service_declare(picoros_node_t* node, picoros_srv_server_t* srv);
+
+
+/**
+ * @brief Initialize service client with precomputed key expression.
+ * @param client Pointer to client instance.
+ * @return PICOROS_OK on success, error code otherwise
+ * @ingroup service_client
+ */
+picoros_res_t picoros_service_client_init(picoros_srv_client_t * client);
+
 
 /**
  * @brief Call service using service client.

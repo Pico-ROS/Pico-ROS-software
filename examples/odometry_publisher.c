@@ -2,13 +2,13 @@
  * @file    odometry_publisher.c
  * @brief   Example odometry publisher node for picoros
  * @date    2025-May-27
- * 
+ *
  * @details This example demonstrates a ROS publisher node that publishes
  *          simulated odometry messages on the "odom" topic.
- * 
+ *
  * @copyright Copyright (c) 2025 Ubiquity Robotics
  *******************************************************************************/
-  
+
 #include <stdio.h>
 #include <stdint.h>
 #include "picoros.h"
@@ -24,7 +24,7 @@ extern int picoros_parse_args(int argc, char **argv, picoros_interface_t* ifx);
 // Example Publisher
 picoros_publisher_t pub_odo = {
     .topic = {
-        .name = "odom",
+        .name = "robot/odometry",
         .type = ROSTYPE_NAME(ros_Odometry),
         .rihs_hash = ROSTYPE_HASH(ros_Odometry),
     },
@@ -32,7 +32,7 @@ picoros_publisher_t pub_odo = {
 
 // Example node
 picoros_node_t node = {
-    .name = "talker",
+    .name = "picoros",
 };
 
 // Buffer for publication, used from this thread
