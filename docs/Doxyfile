@@ -1,6 +1,6 @@
 # Project settings
 PROJECT_NAME           = "Pico-ROS"
-PROJECT_NUMBER         = $(shell cat ../version.txt)
+PROJECT_NUMBER         = ""
 PROJECT_BRIEF         = "A lightweight ROS client implementation for resource-constrained devices"
 OUTPUT_DIRECTORY      = generated
 CREATE_SUBDIRS        = YES

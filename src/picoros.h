@@ -2,12 +2,12 @@
  * @file    picoros.h
  * @brief   Pico-ROS - A lightweight ROS client implementation for resource-constrained devices
  * @date    2025-May-27
- * 
+ *
  * @details This header file provides the core functionality for Pico-ROS, including:
  *          - Node management
  *          - Publisher/Subscriber communication
  *          - Service server implementation
- * 
+ *
  * @copyright Copyright (c) 2025 Ubiquity Robotics
  *******************************************************************************/
 
@@ -28,7 +28,9 @@
 /** @} */
 
 /* Exported includes ---------------------------------------------------------*/
+
 #include <stdint.h>
+#include <stdbool.h>
 
 /* Exported constants --------------------------------------------------------*/
 /** @brief Maximum size for key expressions used in topic names @ingroup picoros */
@@ -40,7 +42,7 @@
 
 /* Exported types ------------------------------------------------------------*/
 
- /**
+/**
  * @defgroup rmw RMW support
  * @ingroup picoros
  * @{
@@ -60,18 +62,22 @@ typedef struct __attribute__((__packed__)) {
  * @brief RMW topic structure required by rmw_zenoh
  */
 typedef struct {
-    const char* name;                     /**< Topic name */
-    const char* type;                     /**< Message type */
-    const char* rihs_hash;                /**< RIHS hash */
+    const char* name;               /**< Topic name */
+    const char* type;               /**< Message type */
+    const char* rihs_hash;          /**< RIHS hash */
 } rmw_topic_t;
 
 /** @} */
 
- /**
+/**
  * @defgroup service_server Service server
  * @ingroup picoros
  * @{
  */
+
+/* Forward declaration */
+struct picoros_srv_server_s;
+
 /**
  * @brief Service reply data structure
  */
@@ -83,31 +89,72 @@ typedef struct {
 } picoros_service_reply_t;
 
 /**
- * @brief Callback function type for service request handling
- * @param request_data Pointer to received request data (CDR encoded)
- * @param reqest_size Size of received request
- * @param user_data User data passed during service registration
- * @return Service reply structure containing response data
- */
-typedef picoros_service_reply_t (*picoros_service_cb_t)(
-            uint8_t*  request_data,
-            size_t    reqest_size,
-            void*     user_data
-            );
+* @brief Callback function type for service request handling
+* @return Service reply structure containing response data
+*/
+typedef picoros_service_reply_t (*picoros_srv_server_cb_t)(
+    struct picoros_srv_server_s* server,         /**< Pointer to server instance */
+    uint8_t*                     request_data,   /**< Pointer to received request data */
+    size_t                       reqest_size     /**< Request data size */
+);
 
 /**
  * @brief Service server structure for Pico-ROS
  */
-typedef struct {
-    z_owned_queryable_t zqable;         /**< Zenoh queryable instance */
-    rmw_topic_t         topic;          /**< Topic information */
-    rmw_attachment_t    attachment;     /**< RMW attachment data */
-    void*              user_data;       /**< User data for callback */
-    picoros_service_cb_t user_callback; /**< User callback for service handling */
-} picoros_service_t;
+typedef struct picoros_srv_server_s{
+    z_owned_queryable_t      zqable;         /**< Zenoh queryable instance */
+    rmw_topic_t              topic;          /**< Topic information */
+    rmw_attachment_t         attachment;     /**< RMW attachment data */
+    void*                    user_data;      /**< User data, not used by picoros */
+    picoros_srv_server_cb_t  user_callback;  /**< User callback for service handling */
+} picoros_srv_server_t;
 
 /** @} */
 
+
+/**
+ * @defgroup service_client Service client
+ * @ingroup picoros
+ * @{
+ */
+
+/* Forward declaration */
+struct picoros_srv_client_s;
+
+/**
+ * @brief Callback function type for service reply handling
+ * @return void
+ */
+typedef void (*picoros_srv_client_cb_t)(
+    struct picoros_srv_client_s*    client,         /**< Pointer to client starting the request */
+    uint8_t*                        reply_data,     /**< Pointer to received reply data (CDR encoded) */
+    size_t                          reply_size,     /**< Size of received reply */
+    bool                            error           /**< Received error reply */
+);
+
+/**
+ * @brief Callback function type for service reply dropped handling
+ * @param client picoros_srv_client_t that started the request
+ * @return void
+ */
+typedef void (*picoros_srv_client_drop_cb_t)( struct picoros_srv_client_s* client);
+
+
+/**
+* @brief Service client structure for Pico-ROS
+ */
+typedef struct picoros_srv_client_s{
+    char*                         node_name;             /**< Node name of service server */
+    uint32_t                      node_domain_id;        /**< Domain ID of service server */
+    rmw_topic_t                   topic;                 /**< Topic information */
+    picoros_srv_client_cb_t       user_callback;         /**< User callback for service reply handling. Called if reply is received. */
+    picoros_srv_client_drop_cb_t  drop_callback;         /**< User callback for service call drop handling. Called for every service call.*/
+    bool                          _in_progress;          /**< Private flag used to limit to one ongoing request */
+    z_get_options_t*              opts;                  /**< Request options, if NULL default options are used */
+    void*                         user_data;             /**< User data, not used by picoros */
+} picoros_srv_client_t;
+
+/** @} */
 
 /**
  * @brief Publisher structure for Pico-ROS @ingroup picoros
@@ -126,14 +173,13 @@ typedef struct {
  * @ingroup picoros
  * @{
  */
+
 /**
  * @brief Callback function type for subscriber data handling
- * @param rx_data Pointer to received data buffer (CDR encoded)
- * @param data_len Size of received data in bytes
  */
 typedef void (*picoros_sub_cb_t)(
-            uint8_t* rx_data,
-            size_t   data_len
+            uint8_t* rx_data,   /**< Pointer to received data buffer (CDR encoded) */
+            size_t   data_len   /**< Size of received data in bytes */
             );
 
 /**
@@ -164,12 +210,12 @@ typedef struct {
 
 /** @} */
 
-
 /**
  * @defgroup interface Network interface
  * @ingroup picoros
  * @{
  */
+
 /**
  * @brief Network interface configuration
  */
@@ -179,8 +225,6 @@ typedef struct {
 } picoros_interface_t;
 
 /** @} */
-
-
 
 /**
  * @brief Result codes for Pico-ROS operations @ingroup picoros
@@ -212,7 +256,7 @@ void picoros_interface_shutdown(void);
  * @param node Pointer to node configuration
  * @return PICOROS_OK on success, error code otherwise
  * @ingroup node
- */ 
+ */
 picoros_res_t picoros_node_init(picoros_node_t* node);
 
 /**
@@ -258,7 +302,25 @@ picoros_res_t picoros_unsubscribe(picoros_subscriber_t *sub);
  * @return PICOROS_OK on success, error code otherwise
  * @ingroup service_server
  */
-picoros_res_t picoros_service_declare(picoros_node_t* node, picoros_service_t* srv);
+picoros_res_t picoros_service_declare(picoros_node_t* node, picoros_srv_server_t* srv);
+
+/**
+ * @brief Call service using service client.
+ * @param client Pointer to client instance. Should be in scope until service call is ongoing.
+ * @param payload Pointer to data payload
+ * @param len Size of data
+ * @return PICOROS_OK on success, PICOROS_NOT_READY when request already progress, error code otherwise
+ * @ingroup service_client
+ */
+picoros_res_t picoros_service_call(picoros_srv_client_t* client, uint8_t* payload, size_t len);
+
+/**
+ * @brief Check if client has ongoing service call.
+ * @param client Pointer to client instance.
+ * @return true if request is in progress
+ * @ingroup service_client
+ */
+bool picoros_service_call_in_progress(picoros_srv_client_t* client);
 
 #ifdef __cplusplus
 }
