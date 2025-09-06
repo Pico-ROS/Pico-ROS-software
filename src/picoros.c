@@ -75,7 +75,7 @@ static int rmw_zenoh_service_keyexpr(picoros_node_t* node, rmw_topic_t* topic, c
                             topic->type, topic->rihs_hash);
     }
     else{
-        return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s%%%s/%s_/RIHS01_%s", node->domain_id, node->name, topic->name,
+        return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s/%s/%s_/RIHS01_%s", node->domain_id, node->name, topic->name,
                             topic->type, topic->rihs_hash);
     }
 }
