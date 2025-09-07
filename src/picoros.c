@@ -301,6 +301,7 @@ void zenoh_shutdown() {
 picoros_res_t picoros_publisher_declare(picoros_node_t* node, picoros_publisher_t* pub) {
     z_view_keyexpr_t ke;
     z_result_t res = Z_OK;
+    z_publisher_options_t *options = &pub->opts;
     char keyexpr[KEYEXPR_SIZE];
     if (pub->topic.type != NULL) {
         rmw_zenoh_topic_keyexpr(node, &pub->topic, keyexpr);
@@ -312,7 +313,7 @@ picoros_res_t picoros_publisher_declare(picoros_node_t* node, picoros_publisher_
 
     rmw_zenoh_gen_attachment_gid(&pub->attachment);
 
-    if ((res = z_declare_publisher(z_session_loan(&s_wrapper), &pub->zpub, z_view_keyexpr_loan(&ke), NULL)) != Z_OK) {
+    if ((res = z_declare_publisher(z_session_loan(&s_wrapper), &pub->zpub, z_view_keyexpr_loan(&ke), options)) != Z_OK) {
         _PR_LOG("Unable to declare node liveliness token! Error:%d\n", res);
         return PICOROS_ERROR;
     }
