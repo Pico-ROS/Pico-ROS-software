@@ -2,10 +2,10 @@
  * @file    odometry_listener.c
  * @brief   Example odometry subscriber node for picoros
  * @date    2025-May-27
- * 
+ *
  * @details This example demonstrates a ROS subscriber node that listens to
  *          odometry messages on the "odom" topic and prints the pose data.
- * 
+ *
  * @copyright Copyright (c) 2025 Ubiquity Robotics
  *******************************************************************************/
 
@@ -27,7 +27,7 @@ void odometry_callback(uint8_t* rx_data, size_t data_len);
 // Example Subscriber
 picoros_subscriber_t sub_odo = {
     .topic = {
-        .name = "odom",
+        .name = "robot/odometry",
         .type = ROSTYPE_NAME(ros_Odometry),
         .rihs_hash = ROSTYPE_HASH(ros_Odometry),
     },
@@ -36,7 +36,7 @@ picoros_subscriber_t sub_odo = {
 
 // Example node
 picoros_node_t node = {
-    .name = "listener",
+    .name = "picoros",
 };
 
 void odometry_callback(uint8_t* rx_data, size_t data_len){

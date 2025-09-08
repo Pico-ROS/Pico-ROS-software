@@ -2,24 +2,22 @@
  * @file    picoros.c
  * @brief   Pico-ROS Core Implementation
  * @date    2025-May-27
- * 
+ *
  * @details This file implements the core functionality of Pico-ROS, including
  *          node management, publisher/subscriber communication, and service
  *          server implementation.
- * 
+ *
  * @copyright Copyright (c) 2025 Ubiquity Robotics
  *******************************************************************************/
 
 /* Private includes ----------------------------------------------------------*/
+#include <stddef.h>
 #include <string.h>
-#include <stdio.h>
 #include <inttypes.h>
 #include "picoros.h"
-#include "zenoh-pico/config.h"
-#include "zenoh-pico/system/common/platform.h"
-#include "zenoh-pico/utils/result.h"
 
 #ifdef PICOROS_DEBUG
+    #include <stdio.h>
     #define _PR_LOG(...) printf(__VA_ARGS__)
 #else
     #define _PR_LOG(...)
@@ -72,25 +70,32 @@ static int rmw_zenoh_topic_keyexpr(picoros_node_t* node, rmw_topic_t* topic, cha
 }
 
 static int rmw_zenoh_service_keyexpr(picoros_node_t* node, rmw_topic_t* topic, char* keyexpr) {
-    return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s/%s/%s_/RIHS01_%s", node->domain_id, node->name, topic->name,
-                    topic->type, topic->rihs_hash);
+    if (node->name == NULL){
+        return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s/%s_/RIHS01_%s", node->domain_id, topic->name,
+                            topic->type, topic->rihs_hash);
+    }
+    else{
+        return snprintf(keyexpr, KEYEXPR_SIZE, "%" PRIu32 "/%s/%s/%s_/RIHS01_%s", node->domain_id, node->name, topic->name,
+                            topic->type, topic->rihs_hash);
+    }
 }
 
 static int rmw_zenoh_topic_liveliness_keyexpr(picoros_node_t* node, rmw_topic_t* topic, char *keyexpr, const char *entity_str) {
 #if USE_NODE_GUID == 1
     uint8_t* guid = node->guid;
 #endif
-    char topic_lv[96];
+    char topic_lv[TOPIC_MAX_NAME];
+    topic_lv[TOPIC_MAX_NAME-1] = 0;
     char *str = &topic_lv[0];
 
     z_id_t id = z_info_zid(z_session_loan(&s_wrapper));
 
-    if (strcmp(entity_str, "SS") == 0){
-        // is service
-        snprintf(topic_lv, 95, "%s/%s", node->name, topic->name);
+    if (strcmp(entity_str, "SS") == 0 && node->name != NULL){
+        // is service and node name is set
+        snprintf(topic_lv, TOPIC_MAX_NAME-1, "%s/%s", node->name, topic->name);
     }
     else{
-        strncpy(topic_lv, topic->name, 95);
+        strncpy(topic_lv, topic->name, TOPIC_MAX_NAME-1);
     }
 
     // replace / with %
@@ -145,8 +150,8 @@ static void sub_data_handler(z_loaned_sample_t *sample, void *ctx) {
     z_free(raw_data);
 }
 
-static void srv_data_handler(z_loaned_query_t *query, void *arg) {
-    picoros_service_t* srv = (picoros_service_t*)arg;
+static void queriable_data_handler(z_loaned_query_t *query, void *arg) {
+    picoros_srv_server_t* srv = (picoros_srv_server_t*)arg;
 
     if (srv->user_callback == NULL){
         return;
@@ -160,7 +165,7 @@ static void srv_data_handler(z_loaned_query_t *query, void *arg) {
     _z_bytes_to_buf(b, rx_data, rx_data_len);
 
     // process
-    picoros_service_reply_t reply = srv->user_callback(rx_data, rx_data_len, srv->user_data);
+    picoros_service_reply_t reply = srv->user_callback(srv, rx_data, rx_data_len);
 
     if (reply.data) {
         // move reply to zbytes
@@ -191,7 +196,48 @@ static void srv_data_handler(z_loaned_query_t *query, void *arg) {
     z_free(rx_data);
 }
 
-static void srv_drop_handler(void* arg) { _PR_LOG("Drop srv callback\n"); }
+static void queriable_drop_handler(void* arg) { _PR_LOG("Drop srv callback\n"); }
+
+static void get_drop_handler(void* ctx){
+    picoros_srv_client_t* client = (picoros_srv_client_t*)ctx;
+    client->_in_progress = false;
+    if(client->drop_callback != NULL){
+        client->drop_callback(client);
+    }
+}
+
+static void get_data_handler(z_loaned_reply_t *reply, void *ctx){
+    if (ctx == NULL){
+        return;
+    }
+    size_t raw_data_len = 0;
+    uint8_t* raw_data  = 0;
+    bool error = false;
+    const z_loaned_sample_t* sample = 0;
+    const z_loaned_bytes_t* payload = 0;
+    const z_loaned_reply_err_t* err = 0;
+
+    if (z_reply_is_ok(reply)) {
+        sample = z_reply_ok(reply);
+        payload = z_sample_payload(sample);
+    }
+    else {
+        err = z_reply_err(reply);
+        payload = z_reply_err_payload(err);
+        error = true;
+    }
+
+    raw_data_len = _z_bytes_len(payload);
+    if (raw_data_len == 0) {
+        return;
+    }
+    raw_data = (uint8_t*)z_malloc(raw_data_len);
+    _z_bytes_to_buf(payload, raw_data, raw_data_len);
+
+    picoros_srv_client_t* client = (picoros_srv_client_t*)ctx;
+    client->user_callback(client, raw_data, raw_data_len, error);
+    z_free(raw_data);
+}
 
 /* Public functions ----------------------------------------------------------*/
 
@@ -345,7 +391,7 @@ picoros_res_t picoros_subscriber_declare(picoros_node_t* node, picoros_subscribe
     return PICOROS_OK;
 }
 
-picoros_res_t picoros_service_declare(picoros_node_t* node, picoros_service_t* srv) {
+picoros_res_t picoros_service_declare(picoros_node_t* node, picoros_srv_server_t* srv) {
     z_result_t res;
     char keyexpr[KEYEXPR_SIZE];
 
@@ -364,7 +410,7 @@ picoros_res_t picoros_service_declare(picoros_node_t* node, picoros_service_t* s
     options.complete = true; // needed for rmw_zenoh
 
     z_owned_closure_query_t callback;
-    z_closure_query(&callback, srv_data_handler, srv_drop_handler, srv);
+    z_closure_query(&callback, queriable_data_handler, queriable_drop_handler, srv);
     if ((res = z_declare_queryable(z_session_loan(&s_wrapper), &srv->zqable, z_view_keyexpr_loan(&ke),
                                    z_closure_query_move(&callback), &options)) != Z_OK) {
         _PR_LOG("Unable to declare service! Error:%d\n", res);
@@ -381,6 +427,83 @@ picoros_res_t picoros_service_declare(picoros_node_t* node, picoros_service_t* s
         }
     }
     return PICOROS_OK;
+}
+
+
+picoros_res_t picoros_service_client_init(picoros_srv_client_t * client){
+    if (client->_key_buf == NULL){
+        client->_key_buf = z_malloc(KEYEXPR_SIZE);
+    }
+    // Generate key expressions
+    if (client->topic.type != NULL) {
+        picoros_node_t node = {
+            .domain_id = client->node_domain_id,
+            .name = client->node_name,
+        };
+        rmw_zenoh_service_keyexpr(&node, &client->topic, client->_key_buf);
+        z_view_keyexpr_from_str_unchecked(&client->ke, client->_key_buf);
+    }
+    else {
+        z_view_keyexpr_from_str_unchecked(&client->ke, client->topic.name);
+    }
+    return PICOROS_OK;
+}
+
+
+picoros_res_t picoros_service_call(picoros_srv_client_t * client, uint8_t* payload, size_t len){
+    if (client == NULL) { return PICOROS_ERROR;}
+    if (client->_in_progress) { return PICOROS_NOT_READY;}
+
+    z_result_t res;
+
+    // create key expression if not done before
+    if (client->_key_buf == NULL){
+        picoros_service_client_init(client);
+    }
+
+    // Default options
+    z_get_options_t default_opts;
+    z_get_options_default(&default_opts);
+    z_get_options_t* opts = &default_opts;
+    if (client->opts != NULL){
+        opts = client->opts;
+    }
+
+    // Payload
+    z_owned_bytes_t zbytes;
+    z_bytes_copy_from_buf(&zbytes, payload, len);
+    opts->payload = z_bytes_move(&zbytes);
+
+    // RMW attachment
+    rmw_attachment_t attachment = {
+        .rmw_gid_size = RMW_GID_SIZE,
+        .sequence_number = 1,
+        .time = z_clock_now().tv_nsec,
+    };
+    z_owned_bytes_t tx_attachment;
+    z_bytes_copy_from_buf(&tx_attachment, (uint8_t*)&attachment, sizeof(rmw_attachment_t));
+    opts->attachment = z_bytes_move(&tx_attachment);
+
+    // Closure
+    z_owned_closure_reply_t callback = {
+        ._val.call = get_data_handler,
+        ._val.drop = get_drop_handler,
+        ._val.context = client,
+    };
+
+    client->_in_progress = true;
+    if ((res = z_get(z_session_loan(&s_wrapper), z_view_keyexpr_loan(&client->ke), "", z_closure_reply_move(&callback), opts)) != Z_OK) {
+        _PR_LOG("Error calling %s service! Error:%d\n", client->topic.name, res);
+        client->_in_progress = false;
+        z_bytes_drop(opts->attachment);
+        z_bytes_drop(opts->payload);
+        return PICOROS_ERROR;
+    }
+    return PICOROS_OK;
+}
+
+bool picoros_service_call_in_progress(picoros_srv_client_t* client){
+    return client->_in_progress;
 }
 
 picoros_res_t picoros_unsubscribe(picoros_subscriber_t* sub) {

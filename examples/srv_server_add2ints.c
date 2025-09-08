@@ -1,14 +1,14 @@
 /*******************************************************************************
- * @file    srv_add2ints.c
+ * @file    srv_server_add2ints.c
  * @brief   Example service server node for picoros
  * @date    2025-May-27
- * 
+ *
  * @details This example demonstrates a ROS service server implementation that
  *          provides an "add two integers" service functionality.
- * 
+ *
  * @copyright Copyright (c) 2025 Ubiquity Robotics
  *******************************************************************************/
-  
+
 #include <stdio.h>
 #include <stdint.h>
 #include "picoros.h"
@@ -22,15 +22,15 @@
 extern int picoros_parse_args(int argc, char **argv,  picoros_interface_t* ifx);
 
 // Service callback
-picoros_service_reply_t add2_srv_cb(uint8_t* request, size_t size, void* user_data);
+picoros_service_reply_t add2_srv_cb(picoros_srv_server_t* server, uint8_t* request, size_t size);
 
 // Static buffer for service reply serialization, used from zenoh threads
 uint8_t srv_buf[1024];
 
 // Example service
-picoros_service_t add2_srv = {
+picoros_srv_server_t add2_srv = {
     .topic = {
-        .name = "add2",
+        .name = "services/add2",
         .type = ROSTYPE_NAME(srv_AddTwoInts),
         .rihs_hash = ROSTYPE_HASH(srv_AddTwoInts),
     },
@@ -43,7 +43,7 @@ picoros_node_t node = {
 };
 
 // Service callback
-picoros_service_reply_t add2_srv_cb(uint8_t* rx_data, size_t rx_size, void* user_data){
+picoros_service_reply_t add2_srv_cb(picoros_srv_server_t* server, uint8_t* rx_data, size_t rx_size){
     // request, response structs
     request_srv_AddTwoInts request = {};
     reply_srv_AddTwoInts response = {};

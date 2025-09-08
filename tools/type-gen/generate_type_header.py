@@ -517,6 +517,7 @@ def parse_type_descriptions(output_dir: str) -> Dict[str, Dict]:
         # 166: 'bounded_wstring_unbounded_sequence', # FIELD_TYPE_BOUNDED_WSTRING_UNBOUNDED_SEQUENCE
     }
 
+    srv_hashes = {}
     for json_file in output_path.rglob('*.json'):
         try:
             with open(json_file, 'r') as f:
@@ -525,9 +526,15 @@ def parse_type_descriptions(output_dir: str) -> Dict[str, Dict]:
             if 'type_hashes' in data and 'type_description_msg' in data:
                 type_hashes = {th['type_name']: th['hash_string'].replace('RIHS01_', '') for th in data['type_hashes']}
 
+
                 # Process main type description
                 main_desc = data['type_description_msg']['type_description']
                 type_name = main_desc['type_name']
+                
+                # Save main srv hash
+                if "/srv/" in type_name:
+                    srv_hashes[type_name] = type_hashes[type_name]
+
                 skip = False
                 if 'referenced_type_descriptions' in data['type_description_msg']:
                     ref_types = data['type_description_msg']['referenced_type_descriptions']
@@ -549,6 +556,11 @@ def parse_type_descriptions(output_dir: str) -> Dict[str, Dict]:
                             'fields': fields,
                             'original_name': type_name
                         }
+                        if "_Request" in type_name:
+                           type_info[type_name]['hash'] = srv_hashes[type_name[:-8]]
+                        elif "_Response" in type_name:
+                           type_info[type_name]['hash'] = srv_hashes[type_name[:-9]]
+
                     else:
                         print(f"Skipping {type_name}, incompatible field types")
 
