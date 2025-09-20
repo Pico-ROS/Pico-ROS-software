@@ -333,7 +333,7 @@ picoros_res_t picoros_publisher_declare(picoros_node_t* node, picoros_publisher_
 }
 
 // Publish to a topic
-picoros_res_t picoros_publish(picoros_publisher_t* pub, uint8_t* payload, size_t len) {
+picoros_res_t _picoros_publish(picoros_publisher_t* pub, uint8_t* payload, size_t len, bool is_static) {
     z_result_t res = Z_OK;
     z_publisher_put_options_t options;
     z_publisher_put_options_default(&options);
@@ -347,13 +347,26 @@ picoros_res_t picoros_publish(picoros_publisher_t* pub, uint8_t* payload, size_t
     options.attachment = z_bytes_move(&z_attachment);
 
     z_owned_bytes_t zbytes;
-    z_bytes_from_static_buf(&zbytes, payload, len);
+    if (is_static){
+        z_bytes_from_static_buf(&zbytes, payload, len);
+    }
+    else{
+        z_bytes_copy_from_buf(&zbytes, payload, len);
+    }
 
     if ((res = z_publisher_put(z_publisher_loan(&pub->zpub), z_bytes_move(&zbytes), &options)) != Z_OK) {
         _PR_LOG("Unable to publish payload! Error:%d\n", res);
         return PICOROS_ERROR;
     }
     return PICOROS_OK;
+}
+
+picoros_res_t picoros_publish(picoros_publisher_t* pub, uint8_t* payload, size_t len) {
+    _picoros_publish(pub, payload, len, false);
+}
+
+picoros_res_t picoros_publish_ref(picoros_publisher_t* pub, uint8_t* payload, size_t len) {
+    _picoros_publish(pub, payload, len, true);
 }
 
 // Subscribe to a topic
