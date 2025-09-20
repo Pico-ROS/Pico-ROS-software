@@ -274,14 +274,29 @@ picoros_res_t picoros_node_init(picoros_node_t* node);
 picoros_res_t picoros_publisher_declare(picoros_node_t* node, picoros_publisher_t *pub);
 
 /**
- * @brief Publish data on a topic
+ * @brief Publish data on a topic using copy of payload.
  * @param pub Pointer to publisher instance
  * @param payload Pointer to data to publish
  * @param len Length of data in bytes
  * @return PICOROS_OK on success, error code otherwise
+ * @details Payload is cloned. Buffer can be reused after the function return.
  * @ingroup publisher
  */
 picoros_res_t picoros_publish(picoros_publisher_t *pub, uint8_t *payload, size_t len);
+
+/**
+ * @brief Publish data on a topic using reference to payload.
+ * @param pub Pointer to publisher instance
+ * @param payload Pointer to data to publish
+ * @param len Length of data in bytes
+ * @return PICOROS_OK on success, error code otherwise
+ * @details Payload is passed as reference. Buffer can be reused only when data is
+ *          already processed by the network layer. With blocking TX and no batching
+ *          mechanism this will be after the function return.
+ * @ingroup publisher
+ */
+picoros_res_t picoros_publish_ref(picoros_publisher_t *pub, uint8_t *payload, size_t len);
+
 
 /**
  * @brief Declare a subscriber for a node
