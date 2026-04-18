@@ -179,6 +179,26 @@ int main() {
     print_header("Service Types Tests:");
     SRV_LIST_EXPAND(TEST_SRV, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED, PS_UNUSED)
 
+    print_header("Sequence n_deserialized Tests:");
+    {
+        uint8_t buffer[TEST_BUFFER_SIZE] = {};
+        int32_t src_data[3] = {10, 20, 30};
+        int32_t_sequence src = {.data = src_data, .n_elements = 3};
+        size_t len = ps_serialize(buffer, &src, TEST_BUFFER_SIZE);
+
+        int32_t dst_data[8] = {0};
+        int32_t_sequence dst = {.data = dst_data, .n_elements = 8, .n_deserialized = 0xdead};
+        bool ok = ps_deserialize(buffer, &dst, TEST_BUFFER_SIZE);
+
+        bool test_passed = ok
+            && dst.n_elements == 8
+            && dst.n_deserialized == 3
+            && dst_data[0] == 10 && dst_data[1] == 20 && dst_data[2] == 30;
+        print_test_result("int32_t_sequence n_deserialized", test_passed);
+        if (!test_passed) { some_test_failed = true; }
+        (void)len;
+    }
+
     if(some_test_failed){
         printf("\n%s%s Some tests failed! %s\n\n",
                BOLD_TEXT, RED_TEXT, RESET_TEXT);
