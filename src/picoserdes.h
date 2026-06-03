@@ -73,7 +73,7 @@
  *      REQUEST / REPLY = Request/reply type, implemented as struct. FUNC(<fields...>)
  *          FIELD = Field of request/reply member. FUNC(type, name)
  *          ARRAY = Array field of request/reply member. FUNC(type, name, size)
- *          SEQUENCE = Sequence field of request/reply member. FUNC(type, name). 
+ *          SEQUENCE = Sequence field of request/reply member. FUNC(type, name).
  *
  * Each entry in table must have the following format
  * SRV(                  \
@@ -137,10 +137,18 @@ typedef char* rstring;
 #define FIELD_EXPAND(TYPE, NAME) TYPE NAME;
 #define ARRAY_EXPAND(TYPE, NAME, SIZE) TYPE NAME[SIZE];
 #define SEQUENCE_EXPAND(TYPE, NAME, ...) TYPE##_sequence NAME;
+/* Sequence layout:
+ *   data            - pointer to caller-owned storage
+ *   n_elements      - capacity of that storage; also the element count used
+ *                     during serialization
+ *   n_deserialized  - written by ps_deserialize: reset to 0 on entry, set to
+ *                     the actual number of elements read on success. Lets the
+ *                     caller distinguish capacity from received count. */
 #define SEQUENCE_DECLARE(TYPE, ...)             \
     typedef struct{                             \
         TYPE* data;                             \
         uint32_t n_elements;                    \
+        uint32_t n_deserialized;                \
     }TYPE##_sequence;
 #define BTYPE_DECLARE(TYPE, NAME, HASH, TYPE2, ...) \
     typedef TYPE2 TYPE; \
@@ -171,7 +179,7 @@ typedef char* rstring;
  BASE_TYPES_LIST(SEQUENCE_DECLARE)
  MSG_LIST(BTYPE_DECLARE, CTYPE_DECLARE, BTYPE_DECLARE, FIELD_EXPAND, ARRAY_EXPAND, SEQUENCE_EXPAND)
  SRV_LIST(SRV_DECLARE, REQUEST_DECLARE, REPLY_DECLARE, FIELD_EXPAND, ARRAY_EXPAND, SEQUENCE_EXPAND)
- 
+
 /** @} */
 #undef CAT
 #undef FIELD_EXPAND

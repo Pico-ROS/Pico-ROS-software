@@ -2,11 +2,11 @@
  * @file    picoserdes.c
  * @brief   Pico CDR serdes implementation
  * @date    2025-May-31
- * 
+ *
  * @details This file implements the CDR serialization and deserialization functions
  *          for ROS messages, providing the core functionality for message encoding
  *          and decoding.
- * 
+ *
  * @copyright Copyright (c) 2025 Ubiquity Robotics
  *******************************************************************************/
 
@@ -52,7 +52,12 @@ bool ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) {                             
 }                                                                                      \
 bool ps_des_sequence_##TYPE(ucdrBuffer* reader, TYPE##_sequence* msg) {                \
     uint32_t len = 0;                                                                  \
-    return ucdr_deserialize_sequence_##TYPE(reader, msg->data, msg->n_elements, &len); \
+    msg->n_deserialized = 0;                                                           \
+    if (!ucdr_deserialize_sequence_##TYPE(reader, msg->data, msg->n_elements, &len)) { \
+        return false;                                                                  \
+    }                                                                                  \
+    msg->n_deserialized = len;                                                         \
+    return true;                                                                       \
 }                                                                                      \
 bool ps_des_array_##TYPE(ucdrBuffer* reader, TYPE* msg, uint32_t max_number) {         \
     return ucdr_deserialize_array_##TYPE(reader, msg, max_number);                     \
@@ -166,7 +171,7 @@ void ucdr_seq_end(ucdr_writer_t* writer){
 
 #define PS_DES_ARRAY(TYPE, FIELD, NUMBER)  \
     if( ps_des_array_##TYPE(reader, msg->FIELD, NUMBER) != true){ return false; }
-    
+
 #define PS_DES_SEQUENCE(TYPE, FIELD)  \
     if( ps_des_sequence_##TYPE(reader, &msg->FIELD) != true){ return false; }
 
@@ -175,7 +180,7 @@ void ucdr_seq_end(ucdr_writer_t* writer){
     bool ps_ser_sequence_##TYPE(ucdrBuffer* writer, TYPE##_sequence* msg) {                     \
         return ps_ser_sequence_##TYPE2(writer, (TYPE2##_sequence*)msg);                         \
     }
-    
+
     #define PS_SER_MSG_CIMPL(TYPE, NAME, HASH, ...)                                             \
     bool ps_ser_##TYPE(ucdrBuffer* writer, TYPE* msg) { __VA_ARGS__ return true; }              \
     bool ps_ser_sequence_##TYPE(ucdrBuffer* writer, TYPE##_sequence* msg) {                     \
@@ -183,7 +188,7 @@ void ucdr_seq_end(ucdr_writer_t* writer){
         for (int i = 0; i < msg->n_elements; i++){if (ps_ser_##TYPE(writer, &msg->data[i]) == false) {return false;}} \
         return true;                                                                            \
     }
-    
+
     #define PS_DES_MSG_BIMPL(TYPE, NAME, HASH, TYPE2 ...)                                       \
     bool ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) { return ps_des_##TYPE2(reader, msg); }   \
     bool ps_des_sequence_##TYPE(ucdrBuffer* reader, TYPE##_sequence* msg) {                     \
@@ -194,9 +199,13 @@ void ucdr_seq_end(ucdr_writer_t* writer){
     bool ps_des_##TYPE(ucdrBuffer* reader, TYPE* msg) { __VA_ARGS__ return true; }              \
     bool ps_des_sequence_##TYPE(ucdrBuffer*reader, TYPE##_sequence* msg) {                      \
         uint32_t elements = 0;                                                                  \
+        msg->n_deserialized = 0;                                                                \
         ucdr_deserialize_uint32_t(reader, &elements);                                           \
         if (elements > msg->n_elements){return false;}                                          \
-        for (int i = 0; i < elements; i++){if (ps_des_##TYPE(reader, &msg->data[i]) == false){return false;}} \
+        for (int i = 0; i < elements; i++){                                                     \
+            if (ps_des_##TYPE(reader, &msg->data[i]) == false){ return false; }                 \
+            else { msg->n_deserialized++; }                                                     \
+        }                                                                                       \
         return true;                                                                            \
     }
 
