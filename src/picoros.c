@@ -181,7 +181,7 @@ static void queriable_data_handler(z_loaned_query_t *query, void *arg) {
 
         // rmw attachment
         srv->attachment.sequence_number = 1;
-        srv->attachment.time = z_clock_now().tv_nsec;
+        srv->attachment.time = 1000000000 * z_clock_now().tv_sec + z_clock_now().tv_nsec;
         z_query_reply_options_t options;
         z_query_reply_options_default(&options);
         z_owned_bytes_t tx_attachment;
@@ -383,7 +383,7 @@ picoros_res_t picoros_publish(picoros_publisher_t* pub, uint8_t* payload, size_t
     z_publisher_put_options_default(&options);
 
     pub->attachment.sequence_number++;
-    pub->attachment.time = z_clock_now().tv_nsec;
+    pub->attachment.time = 1000000000 * z_clock_now().tv_sec + z_clock_now().tv_nsec;
 
     z_owned_bytes_t z_attachment;
     z_bytes_from_static_buf(&z_attachment, (uint8_t*)&pub->attachment, sizeof(rmw_attachment_t));
