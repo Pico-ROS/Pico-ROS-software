@@ -264,8 +264,15 @@ picoros_res_t picoros_interface_init(picoros_interface_t* ifx) {
         }
     }
 
+    z_open_options_t open_opts;
+    z_open_options_default(&open_opts);
+    #if Z_FEATURE_MULTI_THREAD == 1
+        // zenoh-pico >= 1.9 runs read, lease and keep alive on one executor task started by z_open()
+        open_opts.executor_task_attributes = ifx->executor_task_attributes;
+    #endif
+
     _PR_LOG("Opening Zenoh session...\r\n");
-    if ((res = z_open(&s_wrapper, z_config_move(&config), NULL)) != Z_OK) {
+    if ((res = z_open(&s_wrapper, z_config_move(&config), &open_opts)) != Z_OK) {
         _PR_LOG("Unable to open Zenoh session! Error:%d\n", res);
         return PICOROS_NOT_READY;
     }

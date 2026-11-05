@@ -238,6 +238,9 @@ typedef struct {
         zp_send_keep_alive_options_t*   keep_alive_opts;     /**< Keep alive options */
         zp_send_join_options_t*         join_options;        /**< Join options - multicast only */
     #endif
+    #if Z_FEATURE_MULTI_THREAD == 1
+        z_task_attr_t*                  executor_task_attributes; /**< Executor task attributes passed to z_open(), NULL for zenoh-pico defaults */
+    #endif
 } picoros_interface_t;
 
 /** @} */
