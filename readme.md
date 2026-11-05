@@ -126,6 +126,24 @@ For compatibility with `rmw_zenohd` default configuration, set matching zenoh-pi
  - `-DZ_TRANSPORT_LEASE=60000` and
  - `-DZ_TRANSPORT_LEASE_EXPIRE_FACTOR=2`
 
+### ESP-IDF
+
+[components/picoros](components/picoros/CMakeLists.txt) is an ESP-IDF component that builds Pico-ROS, Micro-CDR and
+zenoh-pico from this repository and its submodules, with zenoh-pico's `config.h` generated at configure time. Add the
+repository as a submodule and, in your project's `CMakeLists.txt` before `project.cmake`:
+
+```cmake
+list(APPEND EXTRA_COMPONENT_DIRS "${CMAKE_CURRENT_LIST_DIR}/third_party/Pico-ROS-software/components")
+set(PICOROS_USER_TYPE_FILE "my_types.h")                                  # default example_types.h
+set(PICOROS_USER_TYPE_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/main/include") # where that header lives
+set(PICOROS_ZENOH_CMAKE_ARGS -DZ_FEATURE_MULTI_THREAD=1 -DZ_FEATURE_LINK_TCP=1 ... -DZ_TRANSPORT_LEASE=60000)
+set(PICOROS_ZENOH_LOG INFO)                                               # zenoh-pico log level, default off
+set(PICOROS_DEBUG ON)                                                     # Pico-ROS logging, default off
+```
+
+then `REQUIRES picoros` in your components. All variables are optional; the component header lists the defaults.
+[examples/esp32p4_nano](examples/esp32p4_nano/) is a complete project using it.
+
 ## Example projects
 
 - [picoros-examples](https://github.com/Pico-ROS/picoros-examples)
