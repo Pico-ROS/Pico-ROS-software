@@ -1,0 +1,18 @@
+menu "Pico-ROS example"
+
+    config PICOROS_ROUTER_LOCATOR
+        string "rmw_zenohd router locator"
+        default "tcp/192.168.1.16:7447"
+        help
+            Zenoh locator of the ROS 2 rmw_zenohd router this node connects to as a client.
+
+    config PICOROS_NODE_NAME
+        string "ROS node name"
+        default "picoros_p4"
+
+    config PICOROS_DOMAIN_ID
+        int "ROS domain ID"
+        default 0
+        range 0 232
+
+endmenu
