@@ -148,6 +148,10 @@ static void sub_data_handler(z_loaned_sample_t *sample, void *ctx) {
         return;
     }
     uint8_t *raw_data = (uint8_t*)z_malloc(raw_data_len);
+    if (raw_data == NULL) {
+        _PR_LOG("Out of memory receiving a sample, dropped\n");
+        return;
+    }
     _z_bytes_to_buf(b, raw_data, raw_data_len);
 
     // Call user callback function if given:
@@ -169,6 +173,12 @@ static void queriable_data_handler(z_loaned_query_t *query, void *arg) {
 
     // get request data
     uint8_t* rx_data = (uint8_t*)z_malloc(rx_data_len);
+    // z_malloc(0) may legitimately return NULL; only a non-empty request is
+    // an allocation failure. Unanswered, the caller times out.
+    if (rx_data == NULL && rx_data_len > 0) {
+        _PR_LOG("Out of memory receiving a service request, not answered\n");
+        return;
+    }
     _z_bytes_to_buf(b, rx_data, rx_data_len);
 
     // process
@@ -179,13 +189,24 @@ static void queriable_data_handler(z_loaned_query_t *query, void *arg) {
         z_owned_bytes_t reply_payload;
         z_bytes_copy_from_buf(&reply_payload, reply.data, reply.length);
 
-        // rmw attachment
-        srv->attachment.sequence_number = 1;
-        srv->attachment.time = 1000000000 * z_clock_now().tv_sec + z_clock_now().tv_nsec;
+        // Echo the request's sequence number and GID so rmw_zenoh clients can match the reply.
+        // Stack copy: srv->attachment holds this server's GID; z_query_reply() sends synchronously.
+        rmw_attachment_t tx = srv->attachment;
+        tx.sequence_number = 1;
+        const z_loaned_bytes_t *req_attachment = z_query_attachment(query);
+        if (req_attachment != NULL) {
+            size_t req_attachment_len = _z_bytes_len(req_attachment);
+            if (req_attachment_len == sizeof(rmw_attachment_t)) {
+                uint8_t req_attachment_buf[sizeof(rmw_attachment_t)];
+                _z_bytes_to_buf(req_attachment, req_attachment_buf, req_attachment_len);
+                picoros_reply_attachment_from_request(&tx, req_attachment_buf, req_attachment_len);
+            }
+        }
+        tx.time = 1000000000 * z_clock_now().tv_sec + z_clock_now().tv_nsec;
         z_query_reply_options_t options;
         z_query_reply_options_default(&options);
         z_owned_bytes_t tx_attachment;
-        z_bytes_from_static_buf(&tx_attachment, (uint8_t*)&srv->attachment, sizeof(rmw_attachment_t));
+        z_bytes_from_static_buf(&tx_attachment, (uint8_t*)&tx, sizeof(tx));
         options.attachment = z_bytes_move(&tx_attachment);
 
         // send reply
@@ -239,6 +260,10 @@ static void get_data_handler(z_loaned_reply_t *reply, void *ctx){
         return;
     }
     raw_data = (uint8_t*)z_malloc(raw_data_len);
+    if (raw_data == NULL) {
+        _PR_LOG("Out of memory receiving a service reply, dropped\n");
+        return;
+    }
     _z_bytes_to_buf(payload, raw_data, raw_data_len);
 
     picoros_srv_client_t* client = (picoros_srv_client_t*)ctx;
@@ -496,6 +521,9 @@ picoros_res_t picoros_service_drop(picoros_srv_server_t* serv) {
 picoros_res_t picoros_service_client_init(picoros_srv_client_t * client){
     if (client->_key_buf == NULL){
         client->_key_buf = z_malloc(KEYEXPR_SIZE);
+        if (client->_key_buf == NULL) {
+            return PICOROS_ERROR;
+        }
     }
     // Generate key expressions
     if (client->topic.type != NULL) {

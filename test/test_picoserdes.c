@@ -199,6 +199,51 @@ int main() {
         (void)len;
     }
 
+    print_header("Malformed String Tests:");
+    {
+        // A CDR string is a uint32 length (including the NUL) then the bytes.
+        // Each case lies about that length; decoding must refuse and leave out untouched.
+        struct {
+            const char* name;
+            uint32_t len;
+            const char* body;
+            size_t body_len;
+        } cases[] = {
+            {"string zero length", 0, "", 0},
+            {"string length past buffer end", 64, "abc", 4},
+            {"string length near UINT32_MAX", 0xFFFFFFF0u, "abc", 4},
+            {"string missing NUL", 3, "abc", 3},
+        };
+        for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+            uint8_t buffer[16] = {0};
+            ucdrBuffer w;
+            ucdr_init_buffer(&w, buffer, sizeof(buffer));
+            ucdr_serialize_uint32_t(&w, cases[i].len);
+            memcpy(buffer + 4, cases[i].body, cases[i].body_len);
+
+            ucdrBuffer r;
+            ucdr_init_buffer(&r, buffer, 4 + cases[i].body_len);
+            char* out = NULL;
+            bool test_passed = !ucdr_deserialize_rstring(&r, &out) && out == NULL;
+            print_test_result(cases[i].name, test_passed);
+            if (!test_passed) { some_test_failed = true; }
+        }
+
+        // More strings on the wire than the caller has room for.
+        uint8_t buffer[64] = {0};
+        ucdrBuffer w;
+        ucdr_init_buffer(&w, buffer, sizeof(buffer));
+        ucdr_serialize_uint32_t(&w, 5);
+        char* strings[2] = {NULL, NULL};
+        uint32_t number = 0xdead;
+        ucdrBuffer r;
+        ucdr_init_buffer(&r, buffer, sizeof(buffer));
+        bool test_passed = !ucdr_deserialize_sequence_rstring(&r, strings, 2, &number)
+            && number == 0;
+        print_test_result("string sequence count past capacity", test_passed);
+        if (!test_passed) { some_test_failed = true; }
+    }
+
     if(some_test_failed){
         printf("\n%s%s Some tests failed! %s\n\n",
                BOLD_TEXT, RED_TEXT, RESET_TEXT);

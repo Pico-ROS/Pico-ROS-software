@@ -31,6 +31,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <string.h>
 
 /* Exported constants --------------------------------------------------------*/
 /** @brief Maximum size for key expressions used in rmw topic names @ingroup picoros */
@@ -60,6 +62,24 @@ typedef struct __attribute__((__packed__)) {
     uint8_t  rmw_gid_size;          /**< Size of RMW GID */
     uint8_t  rmw_gid[RMW_GID_SIZE]; /**< RMW Global Identifier */
 } rmw_attachment_t;
+
+/**
+ * @brief Copy a request's sequence number and GID into a service reply's attachment,
+ *        so rmw_zenoh clients can match the reply to their pending request.
+ * @return true if updated; false (reply untouched) unless req_len == sizeof(rmw_attachment_t).
+ */
+static inline bool picoros_reply_attachment_from_request(rmw_attachment_t *reply,
+                                                          const uint8_t *req, size_t req_len) {
+    if (reply == NULL || req == NULL || req_len != sizeof(rmw_attachment_t)) {
+        return false;
+    }
+    rmw_attachment_t incoming;
+    memcpy(&incoming, req, sizeof(incoming));
+    reply->sequence_number = incoming.sequence_number;
+    reply->rmw_gid_size = incoming.rmw_gid_size;
+    memcpy(reply->rmw_gid, incoming.rmw_gid, RMW_GID_SIZE);
+    return true;
+}
 
 /**
  * @brief RMW topic structure required by rmw_zenoh

@@ -72,14 +72,20 @@ BASE_TYPES_LIST(PS_DES_BASE)
 // Deserialize string without copy
 bool ucdr_deserialize_rstring(ucdrBuffer* ub, char** pstring){
     uint32_t len = 0;
-    bool ret = ucdr_deserialize_endian_uint32_t(ub, ub->endianness, &len);
-    if (ret){
-        *pstring = (char*)ub->iterator;
-        ub->iterator += len;
-        ub->offset += len;
-        ub->last_data_size = 1;
+    if (!ucdr_deserialize_endian_uint32_t(ub, ub->endianness, &len)){
+        return false;
     }
-    return ret;
+    // Untrusted length: must fit the buffer and end in NUL, else the pointer runs past the end
+    // (or wraps on 32-bit). Refuse without moving the iterator.
+    if (len == 0 || len > ucdr_buffer_remaining(ub) || ub->iterator[len - 1] != '\0'){
+        ub->error = true;
+        return false;
+    }
+    *pstring = (char*)ub->iterator;
+    ub->iterator += len;
+    ub->offset += len;
+    ub->last_data_size = 1;
+    return true;
 }
 
 // Wrapper for having consistent names
@@ -109,16 +115,22 @@ bool ucdr_deserialize_array_rstring(ucdrBuffer* ub, char** strings, uint32_t num
 
 // Deserialize strings sequence to array of string pointers
 bool ucdr_deserialize_sequence_rstring(ucdrBuffer* ub, char** strings, uint32_t max_number, uint32_t* number){
-    ucdr_deserialize_endian_uint32_t(ub, ub->endianness, number);
-    if (*number <= max_number){
-        for (int i = 0; i < *number; i++){
-            if (ucdr_deserialize_rstring(ub, &strings[i]) == false){
-                return false;
-            }
-        }
-        return true;
+    uint32_t count = 0;
+    *number = 0;
+    if (!ucdr_deserialize_endian_uint32_t(ub, ub->endianness, &count)){
+        return false;
     }
-    return false;
+    if (count > max_number){
+        ub->error = true;
+        return false;
+    }
+    for (uint32_t i = 0; i < count; i++){
+        if (ucdr_deserialize_rstring(ub, &strings[i]) == false){
+            return false;
+        }
+    }
+    *number = count;
+    return true;
 }
 
 // Serialize array of string pointers
