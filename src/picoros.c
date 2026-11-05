@@ -189,18 +189,8 @@ static void queriable_data_handler(z_loaned_query_t *query, void *arg) {
         z_owned_bytes_t reply_payload;
         z_bytes_copy_from_buf(&reply_payload, reply.data, reply.length);
 
-        // rmw attachment: echo the request's sequence number and GID so a
-        // long-lived rmw_zenoh client can match this reply to its pending
-        // request. A request with no attachment, or one that is not exactly
-        // sizeof(rmw_attachment_t) bytes, keeps the old bookkeeping values
-        // (sequence 1, this server's own GID). Built in a stack-local copy:
-        // srv->attachment carries this server's own GID
-        // (rmw_zenoh_gen_attachment_gid() sets it once, not per-reply), so
-        // must NOT be mutated here -- doing so would leak one client's GID
-        // into every later reply that lacks its own attachment.
-        // z_query_reply() below sends synchronously and the attachment is
-        // dropped before it returns, so a stack-local tx is safe to point
-        // z_bytes_from_static_buf() at.
+        // Echo the request's sequence number and GID so rmw_zenoh clients can match the reply.
+        // Stack copy: srv->attachment holds this server's GID; z_query_reply() sends synchronously.
         rmw_attachment_t tx = srv->attachment;
         tx.sequence_number = 1;
         const z_loaned_bytes_t *req_attachment = z_query_attachment(query);

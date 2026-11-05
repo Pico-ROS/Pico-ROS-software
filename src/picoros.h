@@ -64,21 +64,9 @@ typedef struct __attribute__((__packed__)) {
 } rmw_attachment_t;
 
 /**
- * @brief Copy a request's rmw identity (sequence number and GID) into a
- *        service reply's attachment.
- *
- * rmw_zenoh clients match a reply to its pending request by the reply
- * attachment's sequence number (and writer GID); a server that always
- * replies with its own bookkeeping values instead of the request's makes a
- * long-lived client drop every reply after its first. Leaves `reply`
- * untouched (including `time`, which the caller sets separately) and
- * returns false unless `req` is non-NULL and `req_len` is exactly
- * `sizeof(rmw_attachment_t)`.
- *
- * @param reply    Attachment to update in place.
- * @param req      Raw bytes of the request's attachment, or NULL.
- * @param req_len  Length of `req` in bytes.
- * @return true if `reply` was updated from `req`, false otherwise.
+ * @brief Copy a request's sequence number and GID into a service reply's attachment,
+ *        so rmw_zenoh clients can match the reply to their pending request.
+ * @return true if updated; false (reply untouched) unless req_len == sizeof(rmw_attachment_t).
  */
 static inline bool picoros_reply_attachment_from_request(rmw_attachment_t *reply,
                                                           const uint8_t *req, size_t req_len) {

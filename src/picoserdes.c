@@ -75,10 +75,8 @@ bool ucdr_deserialize_rstring(ucdrBuffer* ub, char** pstring){
     if (!ucdr_deserialize_endian_uint32_t(ub, ub->endianness, &len)){
         return false;
     }
-    // The length comes off the wire. It must fit what is left of the buffer
-    // and include the terminating NUL; otherwise the returned pointer runs
-    // past the end, and a length near UINT32_MAX wraps the iterator backwards
-    // on a 32-bit target. Refuse without moving the iterator.
+    // Untrusted length: must fit the buffer and end in NUL, else the pointer runs past the end
+    // (or wraps on 32-bit). Refuse without moving the iterator.
     if (len == 0 || len > ucdr_buffer_remaining(ub) || ub->iterator[len - 1] != '\0'){
         ub->error = true;
         return false;

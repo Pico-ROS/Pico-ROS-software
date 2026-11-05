@@ -202,8 +202,7 @@ int main() {
     print_header("Malformed String Tests:");
     {
         // A CDR string is a uint32 length (including the NUL) then the bytes.
-        // Each case lies about that length; decoding must refuse it and leave
-        // the output pointer untouched rather than point past the buffer.
+        // Each case lies about that length; decoding must refuse and leave out untouched.
         struct {
             const char* name;
             uint32_t len;
