@@ -168,34 +168,32 @@ static size_t serialize_ros_ParameterValue(ucdrBuffer* writer, pp_ParameterValue
 }
 
 static void deserialize_ros_ParameterValue(ucdrBuffer* reader, pp_ParameterValue* val){
-    bool    d_bool;
-    int64_t d_int;
-    double  d_double;
+    bool    d_bool = false;
+    int64_t d_int = 0;
+    double  d_double = 0;
+    char*   d_string = NULL;
     uint32_t size;
     val->length = 1;
     ucdr_deserialize_uint8_t(reader, &val->type);
 
-    if (val->type == PARAMETER_NOT_SET){
-        return;
-    }
-
+    // Every field is on the wire whatever the type, so read them all: the
+    // next Parameter of a SetParameters request starts after the last one.
     ucdr_deserialize_bool(reader, &d_bool);
     ucdr_deserialize_int64_t(reader, &d_int);
     ucdr_deserialize_double(reader, &d_double);
+    ucdr_deserialize_rstring(reader, &d_string);
     if (val->type == PARAMETER_BOOL){
         val->val_bool = d_bool;
-        return;
     }
     if (val->type == PARAMETER_INTEGER){
         val->val_int = d_int;
-        return;
     }
     if (val->type == PARAMETER_DOUBLE){
         val->val_double = d_double;
-        return;
     }
-
-    ucdr_deserialize_rstring(reader, &val->val_string);
+    if (val->type == PARAMETER_STRING){
+        val->val_string = d_string;
+    }
 
     if (val->type == PARAMETER_BYTE_ARRAY){
         ucdr_deserialize_uint32_t(reader, &val->length);
@@ -226,11 +224,7 @@ static void deserialize_ros_ParameterValue(ucdrBuffer* reader, pp_ParameterValue
     else{
         ucdr_deserialize_uint32_t(reader, &size);
     }
-//    if (val->type == PARAMETER_STRING_ARRAY){
-//    }
-//    else{
-//        ucdr_deserialize_uint32_t(reader, &size);
-//    }
+    ucdr_deserialize_uint32_t(reader, &size); // string_array_value
 }
 
 static size_t serialize_rcl_ParameterDescriptor(ucdrBuffer* writer, pp_ParameterDescriptor* pd){
@@ -327,17 +321,31 @@ static size_t set_params_value(picoparams_server_t* server, ucdrBuffer* reader, 
     char* path = NULL;
     ucdr_deserialize_uint32_t(reader, &n_targets);
 
-    ucdr_serialize_uint32_t(writer, n_targets);
-    for (int i = 0; i < n_targets; i++){
-        ucdr_deserialize_rstring(reader, &path);
+    // The result count is written last: a request cut short gets exactly one
+    // result per entry read, not the count it claimed.
+    ucdr_writer_t wr_results = ucdr_seq_start(writer);
+    uint32_t n_results = 0;
+    for (uint32_t i = 0; i < n_targets; i++){
+        // n_targets is off the wire: stop at the end of the request rather
+        // than loop up to 2^32 times, and never reuse the previous name.
+        path = NULL;
+        if (!ucdr_deserialize_rstring(reader, &path)){
+            break;
+        }
+        // Read the value even for an unknown name, so the next one lines up,
+        // and never act on a value cut short.
+        pp_ParameterValue val = {};
+        deserialize_ros_ParameterValue(reader, &val);
+        if (reader->error){
+            break;
+        }
+        n_results++;
         void* param = pserver.interface.f_ref(path);
         if(param == NULL){
             ucdr_serialize_bool(writer, false);
             ucdr_serialize_string(writer, "Parameter not found");
             continue;
         }
-        pp_ParameterValue val = {};
-        deserialize_ros_ParameterValue(reader, &val);
         char* error_msg = NULL;
         bool status = pserver.interface.f_set(param, &val, &error_msg);
         ucdr_serialize_bool(writer, status);
@@ -348,6 +356,8 @@ static size_t set_params_value(picoparams_server_t* server, ucdrBuffer* reader, 
             ucdr_serialize_string(writer, error_msg);
         }
     }
+    ucdr_seq_set_size(&wr_results, n_results);
+    ucdr_seq_end(&wr_results);
     return (ucdr_buffer_length(writer));
 }
 
@@ -393,6 +403,10 @@ static size_t describe_params(picoparams_server_t* server, ucdrBuffer* reader, u
 picoros_service_reply_t params_server_handler(picoros_srv_server_t* server, uint8_t* request_data, size_t request_size) {
     picoros_service_reply_t reply = {};
 
+    if (request_size < 4){
+        return reply; // no CDR header: no reply
+    }
+
     ucdrBuffer querry_writter = {};
     ucdrBuffer querry_reader = {};
     ucdr_init_buffer(&querry_reader, request_data + 4, request_size - 4);
@@ -415,7 +429,10 @@ picoros_service_reply_t params_server_handler(picoros_srv_server_t* server, uint
         ret = get_params_type(&pserver, &querry_reader, &querry_writter);
     }
     else if(server == &pserver.set_atomic_srv){
-        // Not implemented
+        // Not implemented: refuse in a well-formed SetParametersResult
+        ucdr_serialize_bool(&querry_writter, false);
+        ucdr_serialize_string(&querry_writter, "Not implemented");
+        ret = ucdr_buffer_length(&querry_writter);
     }
 
     reply.data = pserver.interface.reply_buf;
